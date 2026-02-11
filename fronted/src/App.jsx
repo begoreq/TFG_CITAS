@@ -257,50 +257,98 @@ export default function App() {
           )}
           {/* Agenda admin: lista de citas */}
           {modoReserva === 'admin' && (
-            <>
-              <div style={{ width: '100%', marginBottom: 24 }}>
-                <h2 style={{ color: '#2C3E50', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>Crear nueva cita</h2>
-                <div style={{ marginBottom: 18, display: 'flex', gap: 8 }}>
-                  <input type="text" placeholder="Nombre del paciente" id="admin-nombre" style={{ flex: 2, padding: '10px 12px', borderRadius: 6, border: '1.5px solid #18BC9C', fontSize: 15 }} />
-                  <select id="admin-especialidad" style={{ flex: 1, padding: '10px 12px', borderRadius: 6, border: '1.5px solid #18BC9C', fontSize: 15 }}>
-                    <option value="">Especialidad</option>
-                    {ESPECIALIDADES.map((esp) => (
-                      <option key={esp} value={esp}>{esp}</option>
-                    ))}
-                  </select>
-                  <button style={{ padding: '10px 18px', background: '#18BC9C', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, cursor: 'pointer' }}>Añadir</button>
+            <div style={{ fontFamily: 'Inter, Roboto, Arial, sans-serif', background: '#f4f6fa', minHeight: '100vh', padding: '48px 0 48px 0' }}>
+              <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 48, padding: '0 32px' }}>
+                {/* Columna izquierda: Formulario */}
+                <div style={{ flex: 1, minWidth: 340 }}>
+                  <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px rgba(44,62,80,0.09)', padding: '40px 36px', marginBottom: 32 }}>
+                    <h2 style={{ color: '#2C3E50', fontWeight: 700, fontSize: 22, marginBottom: 24 }}>Crear nueva cita</h2>
+                    <form style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                      <div>
+                        <label htmlFor="admin-nombre" style={{ fontWeight: 600, fontSize: 15, color: '#34495e', marginBottom: 6, display: 'block' }}>Nombre del paciente</label>
+                        <input type="text" id="admin-nombre" placeholder="Nombre del paciente" style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #18BC9C', fontSize: 16, marginTop: 4 }} />
+                      </div>
+                      <div>
+                        <label htmlFor="admin-especialidad" style={{ fontWeight: 600, fontSize: 15, color: '#34495e', marginBottom: 6, display: 'block' }}>Especialidad</label>
+                        <select id="admin-especialidad" style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #18BC9C', fontSize: 16, marginTop: 4 }}>
+                          <option value="">Selecciona especialidad</option>
+                          {ESPECIALIDADES.map((esp) => (
+                            <option key={esp} value={esp}>{esp}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button style={{ padding: '12px 0', background: '#18BC9C', color: '#fff', fontWeight: 700, fontSize: 17, border: 'none', borderRadius: 8, cursor: 'pointer', marginTop: 8, boxShadow: '0 2px 8px rgba(24,188,156,0.08)' }}>Añadir cita</button>
+                    </form>
+                  </div>
+                </div>
+                {/* Columna derecha: Agenda visual estilo Fresha */}
+                <div style={{ flex: 2 }}>
+                  <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px rgba(44,62,80,0.09)', padding: '40px 36px' }}>
+                    <h2 style={{ color: '#2C3E50', fontWeight: 700, fontSize: 22, marginBottom: 24 }}>Agenda de hoy</h2>
+                    {/* Multi-columna por profesional */}
+                    <div style={{ display: 'grid', gridTemplateColumns: `80px repeat(${Object.values(PROFESIONALES).flat().length}, 1fr)`, gap: 32, alignItems: 'start' }}>
+                      {/* Columna de horas */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 18 }}>
+                        <div style={{ height: 40 }}></div>
+                        {HORAS.map(h => (
+                          <div key={h} style={{ color: '#b2bec3', fontWeight: 600, fontSize: 15, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>{h}</div>
+                        ))}
+                      </div>
+                      {/* Columnas de profesionales */}
+                      {Object.values(PROFESIONALES).flat().map((prof, idx) => (
+                        <div key={prof} style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center' }}>
+                          {/* Avatar y nombre del profesional arriba */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 12 }}>
+                            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#e0f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6, boxShadow: '0 2px 8px rgba(44,62,80,0.10)' }}>
+                              <span style={{ fontSize: 28, color: '#18BC9C', fontWeight: 700 }}>{prof.split(' ')[1]?.[0] || 'D'}</span>
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: 16, color: '#34495e', textAlign: 'center', maxWidth: 90, lineHeight: 1.2 }}>{prof}</div>
+                          </div>
+                          {HORAS.map(h => {
+                            const cita = agenda.find(c => c.hora === h && c.profesional === prof);
+                            if (!cita) {
+                              return <div key={h} style={{ height: 60 }}></div>;
+                            }
+                            // Colores pasteles y borde lateral
+                            const colorMap = {
+                              'Medicina General': { bg: '#e3f6fd', border: '#38b6ff' },
+                              'Fisioterapia': { bg: '#fff4e3', border: '#ffb347' },
+                              'Psicología': { bg: '#e3ffe3', border: '#43d96b' }
+                            };
+                            const color = colorMap[cita.especialidad] || { bg: '#f4f6fa', border: '#b2bec3' };
+                            return (
+                              <div
+                                key={h}
+                                onClick={() => { setShowHistoria(true); setHistoriaActual(cita); }}
+                                style={{
+                                  height: 60,
+                                  background: color.bg,
+                                  borderRadius: 10,
+                                  borderLeft: `6px solid ${color.border}`,
+                                  boxShadow: '0 2px 8px rgba(44,62,80,0.06)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  padding: '0 18px',
+                                  cursor: 'pointer',
+                                  marginBottom: 0
+                                }}
+                              >
+                                <div style={{ fontWeight: 700, color: '#2C3E50', fontSize: 17 }}>{cita.nombre}</div>
+                                <div style={{ color: '#888', fontSize: 14, fontWeight: 500 }}>{cita.especialidad}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
+                    <button type="button" onClick={() => setPantalla('login')} className="btn-login" style={{ padding: '10px 24px', background: '#34495e', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', borderRadius: 8, cursor: 'pointer' }}>Cerrar sesión</button>
+                  </div>
                 </div>
               </div>
-              <div>
-                <h2 style={{ color: '#2C3E50', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>Agenda de hoy</h2>
-                {agenda.length === 0 ? (
-                  <div style={{ color: '#888', fontSize: 16 }}>No hay citas reservadas.</div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, width: '100%' }}>
-                    {agenda.map((cita, idx) => (
-                      <div key={idx} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 8px rgba(44,62,80,0.08)', padding: '18px 16px', border: '1.5px solid #18BC9C', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, color: '#18BC9C', fontSize: 18 }}>{cita.nombre}</div>
-                          <div style={{ color: '#2C3E50', fontSize: 15 }}>{cita.especialidad} - {cita.hora}</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => { setShowHistoria(true); setHistoriaActual(cita); }} style={{ padding: '8px 18px', background: '#2C3E50', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, cursor: 'pointer' }}>Ver historia</button>
-                          <button onClick={() => {
-                            setAgenda(prev => prev.filter((_, i) => i !== idx));
-                          }} style={{ padding: '8px 12px', background: '#e74c3c', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, cursor: 'pointer' }}>Eliminar</button>
-                          <button onClick={() => {
-                            setAgenda(prev => prev.filter((_, i) => i !== idx));
-                          }} style={{ padding: '8px 12px', background: '#27ae60', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, cursor: 'pointer' }}>Finalizar</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: 18 }}>
-                <button type="button" onClick={() => setPantalla('login')} className="btn-login">Cerrar sesión</button>
-              </div>
-            </>
+            </div>
           )}
           {/* Modal historia clínica admin */}
           {showHistoria && historiaActual && (
