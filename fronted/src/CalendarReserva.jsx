@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Componente de calendario visual tipo Fresha
-export default function CalendarReserva({ onReservaConfirmada, onVolverInicio }) {
+export default function CalendarReserva({ onReservaConfirmada, onVolverInicio, onCancelarCita }) {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
   const [horaSeleccionada, setHoraSeleccionada] = useState(null);
   const [step, setStep] = useState(1);
@@ -139,14 +139,41 @@ export default function CalendarReserva({ onReservaConfirmada, onVolverInicio })
             textAlign: 'center',
             fontWeight: 700,
             fontSize: 24,
-            color: '#3b5bfc',
-            border: '2.5px solid #3b5bfc',
+            color: '#14532d',
+            border: '2.5px solid #22c55e',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: 24
           }}>
-            ¡Reserva confirmada!
+            ¡Cita reservada con éxito!
+            <button
+              style={{
+                marginTop: 12,
+                background: 'none',
+                color: '#e11d48',
+                fontWeight: 700,
+                fontSize: 16,
+                borderRadius: 8,
+                padding: '10px 28px',
+                border: '2px solid #e11d48',
+                cursor: 'pointer',
+                transition: 'background 0.18s',
+                boxShadow: 'none',
+              }}
+              onClick={() => {
+                if (window.confirm('¿Estás seguro de que deseas cancelar tu cita?')) {
+                  setReservaConfirmada(false);
+                  setFechaSeleccionada(null);
+                  setHoraSeleccionada(null);
+                  setStep(1);
+                  if (onVolverInicio) onVolverInicio();
+                  if (onCancelarCita) onCancelarCita();
+                }
+              }}
+            >
+              ¿Te has equivocado? Cancelar Cita
+            </button>
             <button
               style={{
                 marginTop: 12,
@@ -174,6 +201,26 @@ export default function CalendarReserva({ onReservaConfirmada, onVolverInicio })
           </div>
         </div>
       )}
+          {/* Feedback de cancelación */}
+          {typeof window !== 'undefined' && window.citaCancelada && (
+            <div style={{
+              position: 'fixed',
+              bottom: 32,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#fff',
+              color: '#e11d48',
+              fontWeight: 700,
+              fontSize: 17,
+              borderRadius: 8,
+              padding: '12px 32px',
+              boxShadow: '0 2px 8px #e11d4811',
+              border: '2px solid #e11d48',
+              zIndex: 99999
+            }}>
+              Cita cancelada correctamente
+            </div>
+          )}
     </div>
   );
 }

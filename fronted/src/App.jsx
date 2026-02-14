@@ -3,6 +3,17 @@ import React, { useState } from 'react';
 import CalendarReserva from './CalendarReserva.jsx';
 
 export default function App() {
+    const [citaCancelada, setCitaCancelada] = useState(false);
+
+    const handleCancelarCita = () => {
+      setAgenda(prev => prev.slice(0, -1));
+      setStepReserva(0);
+      setProfesionalSeleccionado('');
+      setCitaCancelada(true);
+      setTimeout(() => {
+        setCitaCancelada(false);
+      }, 2000);
+    };
   const [showHistoria, setShowHistoria] = useState(false);
   const [historiaActual, setHistoriaActual] = useState(null);
   const [agenda, setAgenda] = useState([
@@ -297,8 +308,28 @@ export default function App() {
                     setStepReserva(0);
                     setProfesionalSeleccionado('');
                   }}
+                  onCancelarCita={handleCancelarCita}
                 />
               )}
+                    {citaCancelada && (
+                      <div style={{
+                        position: 'fixed',
+                        bottom: 32,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#fff',
+                        color: '#e11d48',
+                        fontWeight: 700,
+                        fontSize: 17,
+                        borderRadius: 8,
+                        padding: '12px 32px',
+                        boxShadow: '0 2px 8px #e11d4811',
+                        border: '2px solid #e11d48',
+                        zIndex: 99999
+                      }}>
+                        Cita cancelada correctamente
+                      </div>
+                    )}
               {/* Solo calendario para paciente, sin inputs de historiaActual */}
             </div>
           </div>
