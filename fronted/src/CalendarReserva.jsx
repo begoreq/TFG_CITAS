@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Componente de calendario visual tipo Fresha
-export default function CalendarReserva({ onReservaConfirmada }) {
+export default function CalendarReserva({ onReservaConfirmada, onVolverInicio }) {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
   const [horaSeleccionada, setHoraSeleccionada] = useState(null);
   const [step, setStep] = useState(1);
@@ -140,9 +140,37 @@ export default function CalendarReserva({ onReservaConfirmada }) {
             fontWeight: 700,
             fontSize: 24,
             color: '#3b5bfc',
-            border: '2.5px solid #3b5bfc'
+            border: '2.5px solid #3b5bfc',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 24
           }}>
             ¡Reserva confirmada!
+            <button
+              style={{
+                marginTop: 12,
+                background: '#2563eb',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 18,
+                borderRadius: 8,
+                padding: '10px 28px',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px #2563eb22',
+                transition: 'background 0.18s',
+              }}
+              onClick={() => {
+                setReservaConfirmada(false);
+                setFechaSeleccionada(null);
+                setHoraSeleccionada(null);
+                setStep(1);
+                if (onVolverInicio) onVolverInicio();
+              }}
+            >
+              Volver a inicio
+            </button>
           </div>
         </div>
       )}

@@ -40,6 +40,7 @@ export default function App() {
       const [nombrePaciente, setNombrePaciente] = useState('');
       const [stepReserva, setStepReserva] = useState(0); // 0: elegir especialidad, 1: elegir profesional, 2: calendario
       const [profesionalSeleccionado, setProfesionalSeleccionado] = useState('');
+      const [mostrarCitas, setMostrarCitas] = useState(false);
 
       const ESPECIALIDADES = [
         'Medicina General',
@@ -106,12 +107,13 @@ export default function App() {
       if (pantalla === 'reserva') {
         // Definir profesionales por especialidad
         const PROFESIONALES_UI = {
-          'Medicina General': [
-            { nombre: 'Dr. Pablo Torres', icon: 'PT', color: '#22c55e' },
-            { nombre: 'Dra. Laura Gómez', icon: '🦷', color: '#14532d' }
+          'Medicina Deportiva': [
+            { nombre: 'Dr. Aparicio', icon: '🏃‍♂️', color: '#22c55e' },
+            { nombre: 'Dra. Benitez', icon: '🏃‍♀️', color: '#22c55e' }
           ],
           'Fisioterapia': [
-            { nombre: 'Fisioterapia', icon: '🦴', color: '#14532d' }
+            { nombre: 'Maria', icon: '🦴', color: '#14532d' },
+            { nombre: 'Angel', icon: '🦴', color: '#14532d' }
           ],
           'Odontología': [
             { nombre: 'Dra. Laura Gómez', icon: '🦷', color: '#14532d' }
@@ -122,6 +124,16 @@ export default function App() {
         };
         return (
           <div style={{ minHeight: '100vh', background: '#f8f9fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', paddingTop: 40 }}>
+            {/* Botón Mis Citas */}
+            <div style={{ width: '100%', maxWidth: 600, margin: '0 auto', display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+              <button
+                onClick={() => setMostrarCitas((v) => !v)}
+                style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 700, fontSize: 16, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+              >
+                Mis Citas
+              </button>
+            </div>
+            {/* Panel principal */}
             <div style={{
               background: '#fff',
               borderRadius: 16,
@@ -133,20 +145,62 @@ export default function App() {
               border: '1.5px solid #18BC9C',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
+              minHeight: 400,
+              position: 'relative'
             }}>
+                            {/* Botón Volver */}
+                            {modoReserva === 'paciente' && stepReserva > 0 && !mostrarCitas && (
+                              <button
+                                style={{
+                                  position: 'absolute',
+                                  left: 32,
+                                  bottom: 24,
+                                  background: '#e5e7eb',
+                                  color: '#14532d',
+                                  fontWeight: 700,
+                                  fontSize: 16,
+                                  borderRadius: 8,
+                                  padding: '10px 28px',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 8px #18bc9c11',
+                                  transition: 'background 0.18s',
+                                }}
+                                onClick={() => {
+                                  if (stepReserva === 2) setStepReserva(1);
+                                  else if (stepReserva === 1) setStepReserva(0);
+                                }}
+                              >
+                                Volver
+                              </button>
+                            )}
               <h1 style={{ color: '#14532d', fontWeight: 700, fontSize: 28, marginBottom: 10, letterSpacing: 0.5, textAlign: 'center' }}>
                 Reserva tu Cita Online - <span style={{ color: '#18BC9C' }}>Clínica SaludCitas</span>
               </h1>
+              {/* Lista de citas */}
+              {mostrarCitas && (
+                <div style={{ width: '100%', margin: '24px 0 0 0', background: '#f4f6fa', borderRadius: 12, padding: '24px 18px', boxShadow: '0 2px 8px #18bc9c11', color: '#14532d' }}>
+                  <h2 style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>Mis Citas</h2>
+                  {agenda.length === 0 && <div style={{ color: '#888', fontSize: 16 }}>No tienes citas reservadas.</div>}
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {agenda.map((cita, idx) => (
+                      <li key={idx} style={{ marginBottom: 10, fontSize: 17, fontWeight: 500, background: '#fff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 4px #18bc9c11', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {cita.fecha ? `${cita.fecha} - ` : ''}{cita.hora} - {cita.especialidad || cita.profesional || ''}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {modoReserva === 'paciente' && stepReserva === 0 && (
                 <>
                   <div style={{ fontSize: 18, color: '#14532d', margin: '12px 0 24px 0', textAlign: 'center' }}>
                     Paso 1: ¿Qué tipo de cita necesitas hoy?
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, width: '100%', maxWidth: 480, margin: '0 auto' }}>
-                    <button onClick={() => { setEspecialidad('Medicina General'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
-                      <span style={{ fontSize: 38, marginBottom: 8 }}>🩺</span>
-                      Medicina General
+                    <button onClick={() => { setEspecialidad('Medicina Deportiva'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
+                      <span style={{ fontSize: 38, marginBottom: 8 }}>🏃‍♂️</span>
+                      Medicina Deportiva
                     </button>
                     <button onClick={() => { setEspecialidad('Fisioterapia'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
                       <span style={{ fontSize: 38, marginBottom: 8 }}>🦴</span>
@@ -162,7 +216,7 @@ export default function App() {
                     </button>
                   </div>
                   <div style={{ marginTop: 32, color: '#888', fontSize: 15, textAlign: 'center' }}>
-                    Calle Salud 123, Madrid | 912 345 678
+                    Avenida Ricardo Soriano, Marbella | 912 345 678
                   </div>
                 </>
               )}
@@ -238,6 +292,10 @@ export default function App() {
                       especialidad,
                       profesional: profesionalSeleccionado
                     }]);
+                  }}
+                  onVolverInicio={() => {
+                    setStepReserva(0);
+                    setProfesionalSeleccionado('');
                   }}
                 />
               )}
