@@ -196,8 +196,48 @@ export default function App() {
                   {agenda.length === 0 && <div style={{ color: '#888', fontSize: 16 }}>No tienes citas reservadas.</div>}
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     {agenda.map((cita, idx) => (
-                      <li key={idx} style={{ marginBottom: 10, fontSize: 17, fontWeight: 500, background: '#fff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 4px #18bc9c11', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {cita.fecha ? `${cita.fecha} - ` : ''}{cita.hora} - {cita.especialidad || cita.profesional || ''}
+                      <li key={idx} style={{ marginBottom: 10, fontSize: 17, fontWeight: 500, background: '#fff', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 4px #18bc9c11', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+                        <span>{cita.fecha ? `${cita.fecha} - ` : ''}{cita.hora} - {cita.especialidad || cita.profesional || ''}</span>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            style={{
+                              border: '2px solid #22c55e',
+                              color: '#22c55e',
+                              background: 'none',
+                              borderRadius: 8,
+                              fontWeight: 700,
+                              fontSize: 15,
+                              padding: '6px 18px',
+                              cursor: 'default',
+                              marginRight: 2
+                            }}
+                            disabled
+                          >
+                            Confirmada
+                          </button>
+                          <button
+                            style={{
+                              border: '2px solid #e11d48',
+                              color: '#e11d48',
+                              background: 'none',
+                              borderRadius: 8,
+                              fontWeight: 700,
+                              fontSize: 15,
+                              padding: '6px 18px',
+                              cursor: 'pointer',
+                              marginLeft: 2
+                            }}
+                            onClick={() => {
+                              if (window.confirm('¿Estás seguro de que deseas anular esta cita?')) {
+                                setAgenda(agenda.filter((_, i) => i !== idx));
+                                setCitaCancelada(true);
+                                setTimeout(() => setCitaCancelada(false), 2000);
+                              }
+                            }}
+                          >
+                            Anular Cita
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
