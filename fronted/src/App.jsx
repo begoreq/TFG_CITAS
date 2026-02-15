@@ -316,22 +316,38 @@ export default function App() {
                     Paso 1: ¿Qué tipo de cita necesitas hoy?
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, width: '100%', maxWidth: 480, margin: '0 auto' }}>
-                    <button onClick={() => { setEspecialidad('Medicina Deportiva'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
-                      <span style={{ fontSize: 38, marginBottom: 8 }}>🏃‍♂️</span>
-                      Medicina Deportiva
-                    </button>
-                    <button onClick={() => { setEspecialidad('Fisioterapia'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
-                      <span style={{ fontSize: 38, marginBottom: 8 }}>🦴</span>
-                      Fisioterapia
-                    </button>
-                    <button onClick={() => { setEspecialidad('Odontología'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
-                      <span style={{ fontSize: 38, marginBottom: 8 }}>🦷</span>
-                      Odontología
-                    </button>
-                    <button onClick={() => { setEspecialidad('Psicología'); setStepReserva(1); }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
-                      <span style={{ fontSize: 38, marginBottom: 8 }}>🧠</span>
-                      Psicología
-                    </button>
+                              <button onClick={() => {
+                                setEspecialidad('Medicina Deportiva');
+                                setStepReserva(1);
+                                setProfesionalSeleccionado(PROFESIONALES_UI['Medicina Deportiva'][0]?.nombre || '');
+                              }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
+                                <span style={{ fontSize: 38, marginBottom: 8 }}>🏃‍♂️</span>
+                                Medicina Deportiva
+                              </button>
+                              <button onClick={() => {
+                                setEspecialidad('Fisioterapia');
+                                setStepReserva(1);
+                                setProfesionalSeleccionado(PROFESIONALES_UI['Fisioterapia'][0]?.nombre || '');
+                              }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
+                                <span style={{ fontSize: 38, marginBottom: 8 }}>🦴</span>
+                                Fisioterapia
+                              </button>
+                              <button onClick={() => {
+                                setEspecialidad('Odontología');
+                                setStepReserva(1);
+                                setProfesionalSeleccionado(PROFESIONALES_UI['Odontología'][0]?.nombre || '');
+                              }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
+                                <span style={{ fontSize: 38, marginBottom: 8 }}>🦷</span>
+                                Odontología
+                              </button>
+                              <button onClick={() => {
+                                setEspecialidad('Psicología');
+                                setStepReserva(1);
+                                setProfesionalSeleccionado(PROFESIONALES_UI['Psicología'][0]?.nombre || '');
+                              }} style={{ background: '#fff', border: 'none', borderRadius: 16, boxShadow: '0 2px 12px #18bc9c22', padding: '32px 0', fontWeight: 600, fontSize: 20, color: '#14532d', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'box-shadow 0.18s', outline: 'none' }}>
+                                <span style={{ fontSize: 38, marginBottom: 8 }}>🧠</span>
+                                Psicología
+                              </button>
                   </div>
                   <div style={{ marginTop: 32, color: '#888', fontSize: 15, textAlign: 'center' }}>
                     Avenida Ricardo Soriano, Marbella | 912 345 678
@@ -396,24 +412,28 @@ export default function App() {
                                   { nombre: 'Plan nutricional', precio: '45€' }
                                 ],
                                 'Maria': [
-                                  { nombre: 'Sesión fisioterapia', precio: '35€' },
-                                  { nombre: 'Rehabilitación', precio: '50€' },
-                                  { nombre: 'Masaje deportivo', precio: '40€' }
+                                  { nombre: 'Sesión Fisioterapia', precio: '60€' },
+                                  { nombre: 'Punción Seca', precio: '65€' },
+                                  { nombre: 'Vendaje Neuromuscular', precio: '30€' },
+                                  { nombre: 'Masaje Deportivo', precio: '55€' }
                                 ],
                                 'Angel': [
-                                  { nombre: 'Sesión fisioterapia', precio: '35€' },
-                                  { nombre: 'Rehabilitación', precio: '50€' },
-                                  { nombre: 'Electroterapia', precio: '45€' }
+                                  { nombre: 'Sesión Fisioterapia', precio: '60€' },
+                                  { nombre: 'Punción Seca', precio: '65€' },
+                                  { nombre: 'Vendaje Neuromuscular', precio: '30€' },
+                                  { nombre: 'Masaje Deportivo', precio: '55€' }
                                 ],
                                 'Dra. Laura Gómez': [
-                                  { nombre: 'Consulta odontológica', precio: '30€' },
-                                  { nombre: 'Limpieza dental', precio: '45€' },
-                                  { nombre: 'Ortodoncia', precio: '60€' }
+                                  { nombre: 'Limpieza Bucal', precio: '55€' },
+                                  { nombre: 'Revisión General', precio: '40€' },
+                                  { nombre: 'Blanqueamiento', precio: '180€' },
+                                  { nombre: 'Empaste', precio: '65€' }
                                 ],
                                 'Dr. Sergio Diaz': [
-                                  { nombre: 'Consulta psicológica', precio: '35€' },
-                                  { nombre: 'Terapia individual', precio: '50€' },
-                                  { nombre: 'Terapia familiar', precio: '60€' }
+                                  { nombre: 'Terapia Individual', precio: '70€' },
+                                  { nombre: 'Terapia de Pareja', precio: '100€' },
+                                  { nombre: 'Sesión Online', precio: '60€' },
+                                  { nombre: 'Evaluación Inicial', precio: '85€' }
                                 ]
                               };
                               return serviciosPorProfesional[profesionalSeleccionado]?.map((serv, idx) => (
