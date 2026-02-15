@@ -87,30 +87,97 @@ export default function App() {
       };
       const handleLogin = (e) => {
         e.preventDefault();
-        if (email === 'admin@clinica.com') {
+        if (email === 'admin' && password === 'admin123') {
           setModoReserva('admin');
           setPantalla('reserva');
-        } else if (email === 'paciente@gmail.com') {
+        } else if (email === 'usuario' && password === 'usuario123') {
           setModoReserva('paciente');
           setPantalla('reserva');
         } else {
-          alert('Usuario no reconocido. Usa admin@clinica.com o paciente@gmail.com');
+          alert('Usuario no reconocido. Usa admin/admin123 o usuario/usuario123');
         }
       };
 
       if (pantalla === 'login') {
         return (
-          <div style={{ minHeight: '100vh', background: '#f8f9fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <form onSubmit={handleLogin} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(44,62,80,0.08)', padding: '32px 24px', maxWidth: 380, width: '100%', border: '1.5px solid #18BC9C', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <h1 style={{ color: '#2C3E50', fontWeight: 700, fontSize: 26, marginBottom: 18, letterSpacing: 0.5 }}>Acceso Portal SaludCitas</h1>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Correo electrónico" style={{ width: '100%', marginBottom: 16, padding: '12px', borderRadius: 6, border: '1.5px solid #18BC9C', fontSize: 15 }} required />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" style={{ width: '100%', marginBottom: 24, padding: '12px', borderRadius: 6, border: '1.5px solid #18BC9C', fontSize: 15 }} required />
-              <button type="submit" style={{ width: '100%', padding: '14px 0', background: '#18BC9C', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', borderRadius: 8, cursor: 'pointer', boxShadow: '0 2px 8px rgba(24,188,156,0.08)' }}>Entrar</button>
-              <div style={{ marginTop: 18, color: '#888', fontSize: 14, textAlign: 'center' }}>
-                <div>Admin: admin@clinica.com</div>
-                <div>Paciente: paciente@gmail.com</div>
+          <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8fbff 0%, #eaf1fb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, Arial, sans-serif' }}>
+            <div style={{ display: 'flex', background: '#fff', borderRadius: 20, boxShadow: '0 4px 32px rgba(44,62,80,0.10)', overflow: 'hidden', maxWidth: 950, width: '100%' }}>
+              {/* Columna izquierda: Logo y descripción */}
+              <div style={{ flex: 1.1, background: 'linear-gradient(135deg, #f8fbff 0%, #eaf1fb 100%)', padding: '48px 40px 48px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 18 }}>
+                  <div style={{ background: '#2563eb', borderRadius: 16, width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="38" height="38" rx="8" fill="#2563eb"/>
+                      <path d="M19 27c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm0 2c-5.523 0-10-4.477-10-10S13.477 7 19 7s10 4.477 10 10-4.477 10-10 10zm0-7a1 1 0 100-2 1 1 0 000 2z" fill="#fff"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 30, color: '#222', letterSpacing: 0.5 }}>MediCitas</div>
+                    <div style={{ color: '#2563eb', fontWeight: 500, fontSize: 17, marginTop: 2 }}>Sistema de Gestión de Citas Médicas</div>
+                  </div>
+                </div>
+                <div style={{ color: '#222', fontSize: 18, marginBottom: 32, marginTop: 8, lineHeight: 1.5 }}>
+                  Plataforma profesional para la gestión eficiente de citas médicas en múltiples especialidades.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 32 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 17, color: '#2563eb' }}>
+                    <span style={{ fontSize: 22 }}>📅</span> Agenda digital completa
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 17, color: '#22c55e' }}>
+                    <span style={{ fontSize: 22 }}>🧑‍⚕️</span> Gestión de pacientes
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 17, color: '#a855f7' }}>
+                    <span style={{ fontSize: 22 }}>🔒</span> Acceso seguro y privado
+                  </div>
+                </div>
               </div>
-            </form>
+              {/* Columna derecha: Login */}
+              <div style={{ flex: 1, background: '#fff', padding: '48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 370 }}>
+                <div style={{ fontWeight: 800, fontSize: 28, color: '#222', marginBottom: 24 }}>Iniciar Sesión</div>
+                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ fontWeight: 600, color: '#222', fontSize: 16 }}>Usuario</div>
+                  <input type="text" value={email} onChange={e => setEmail(e.target.value)} placeholder="Ingrese su usuario" style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #e5e7eb', fontSize: 16, background: '#f8fafc', marginBottom: 4 }} required />
+                  <div style={{ fontWeight: 600, color: '#222', fontSize: 16 }}>Contraseña</div>
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Ingrese su contraseña" style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #e5e7eb', fontSize: 16, background: '#f8fafc', marginBottom: 8 }} required />
+                  <button type="submit" style={{ width: '100%', padding: '14px 0', background: '#2563eb', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', borderRadius: 8, cursor: 'pointer', marginTop: 8, boxShadow: '0 2px 8px #2563eb22' }}>Iniciar Sesión</button>
+                </form>
+                <div style={{ borderTop: '1px solid #e5e7eb', margin: '28px 0 18px 0', height: 1, width: '100%' }}></div>
+                <div style={{ color: '#222', fontWeight: 500, fontSize: 15, marginBottom: 10 }}>Acceso rápido de prueba:</div>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 18 }}>
+                  <div
+                    style={{ flex: 1, background: '#f8fafc', border: '1.5px solid #e5e7eb', borderRadius: 12, padding: '18px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+                    onClick={() => {
+                      setEmail('admin');
+                      setPassword('admin123');
+                      setTimeout(() => {
+                        document.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                      }, 100);
+                    }}
+                  >
+                    <span style={{ fontSize: 28, color: '#2563eb', marginBottom: 2 }}>🔒</span>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>Administrador</div>
+                    <div style={{ color: '#888', fontSize: 15 }}>admin / admin123</div>
+                  </div>
+                  <div
+                    style={{ flex: 1, background: '#f8fafc', border: '1.5px solid #e5e7eb', borderRadius: 12, padding: '18px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+                    onClick={() => {
+                      setEmail('usuario');
+                      setPassword('usuario123');
+                      setTimeout(() => {
+                        document.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                      }, 100);
+                    }}
+                  >
+                    <span style={{ fontSize: 28, color: '#2563eb', marginBottom: 2 }}>👤</span>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>Usuario</div>
+                    <div style={{ color: '#888', fontSize: 15 }}>usuario / usuario123</div>
+                  </div>
+                </div>
+                <div style={{ background: '#f8fafc', borderRadius: 8, padding: '12px 16px', color: '#2563eb', fontSize: 15, fontWeight: 500, textAlign: 'center' }}>
+                  <span style={{ fontWeight: 700 }}>Especialidades disponibles:</span> <span style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}>Medicina Deportiva</span> · <span style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}>Fisioterapia</span> · <span style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}>Odontología</span> · <span style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}>Psicología</span>
+                </div>
+              </div>
+            </div>
           </div>
         );
       }
