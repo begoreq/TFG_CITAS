@@ -87,11 +87,21 @@ export default function App() {
       const handleConfirmar = () => {
         setConfirmar(true);
       };
+      // Estado para el dashboard admin
+      const [adminTab, setAdminTab] = useState('dashboard');
+      // Datos simulados para el dashboard
+      const resumen = {
+        citasHoy: 0,
+        ingresosSemana: 0,
+        totalPacientes: 0,
+        ingresosTotales: 0,
+      };
+      const proximasCitas = [];
       const handleLogin = (e) => {
         e.preventDefault();
         if (email === 'admin' && password === 'admin123') {
           setModoReserva('admin');
-          setPantalla('reserva');
+          setPantalla('admin');
         } else if (email === 'usuario' && password === 'usuario123') {
           setModoReserva('paciente');
           setPantalla('reserva');
@@ -99,6 +109,119 @@ export default function App() {
           alert('Usuario no reconocido. Usa admin/admin123 o usuario/usuario123');
         }
       };
+      if (pantalla === 'admin') {
+        return (
+          <div className="min-h-screen flex bg-gray-50">
+            {/* Menú lateral */}
+            <aside className="w-64 bg-white border-r border-gray-200 flex flex-col min-h-screen">
+              <div className="flex items-center gap-3 px-6 py-6 border-b border-gray-100">
+                <div className="bg-blue-600 rounded-xl w-12 h-12 flex items-center justify-center">
+                  <span className="text-white text-2xl">🩺</span>
+                </div>
+                <div>
+                  <div className="font-extrabold text-lg text-gray-800">MediCitas</div>
+                  <div className="text-xs text-gray-500 font-medium">Gestión de Citas Médicas</div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 mt-6 px-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50">
+                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">A</div>
+                  <div>
+                    <div className="font-semibold text-gray-800 text-sm">Administrador del Sistema</div>
+                    <div className="text-xs text-gray-500">Administrador</div>
+                  </div>
+                </div>
+              </div>
+              <nav className="flex flex-col gap-1 mt-8 px-4">
+                <button onClick={() => setAdminTab('dashboard')} className={`flex items-center gap-3 p-3 rounded-lg font-medium text-base ${adminTab==='dashboard' ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}> <span>📊</span> Dashboard</button>
+                <button onClick={() => setAdminTab('calendario')} className={`flex items-center gap-3 p-3 rounded-lg font-medium text-base ${adminTab==='calendario' ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}> <span>📅</span> Calendario</button>
+                <button onClick={() => setAdminTab('servicios')} className={`flex items-center gap-3 p-3 rounded-lg font-medium text-base ${adminTab==='servicios' ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}> <span>💼</span> Servicios</button>
+                <button onClick={() => setAdminTab('personal')} className={`flex items-center gap-3 p-3 rounded-lg font-medium text-base ${adminTab==='personal' ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}> <span>🧑‍⚕️</span> Personal</button>
+              </nav>
+            </aside>
+            {/* Contenido principal */}
+            <main className="flex-1 p-10">
+              {adminTab === 'dashboard' && (
+                <div>
+                  <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+                  <div className="mb-8">
+                    {/* Selector de rango de tiempo */}
+                    <div className="flex justify-end items-center gap-4 mb-4">
+                      <button
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 text-white font-semibold rounded-md shadow hover:bg-teal-600 transition focus:outline-none"
+                        title="Exportar Informe"
+                        onClick={() => { /* lógica futura de exportación */ }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4.5 19.5h15a2.25 2.25 0 002.25-2.25v-11.25A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v11.25A2.25 2.25 0 004.5 19.5z" />
+                        </svg>
+                        Exportar Informe
+                      </button>
+                      <div className="inline-flex rounded-md shadow-sm bg-white border border-gray-200">
+                        <button
+                          className={`px-4 py-2 text-sm font-medium rounded-l-md focus:outline-none transition ${resumen.rango === 'hoy' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                          onClick={() => {}} // Aquí puedes poner lógica futura
+                        >Hoy</button>
+                        <button
+                          className={`px-4 py-2 text-sm font-medium focus:outline-none transition ${resumen.rango === 'semana' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                          onClick={() => {}} // Aquí puedes poner lógica futura
+                        >Esta Semana</button>
+                        <button
+                          className={`px-4 py-2 text-sm font-medium rounded-r-md focus:outline-none transition ${resumen.rango === 'mes' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-100'}`}
+                          onClick={() => {}} // Aquí puedes poner lógica futura
+                        >Este Mes</button>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-bold mb-2">Panel de Control</div>
+                    <div className="text-gray-500 mb-6">Vista general de la clínica</div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <div className="bg-green-100 rounded-xl shadow p-6 flex flex-col items-start border border-green-200">
+                        <div className="text-green-700 text-sm mb-2">Citas Hoy</div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-3xl font-bold text-green-800">{resumen.citasHoy}</span>
+                          <span className="text-green-500 text-xl">📅</span>
+                        </div>
+                        <div className="text-green-600 text-sm">0 pendientes</div>
+                      </div>
+                      <div className="bg-blue-100 rounded-xl shadow p-6 flex flex-col items-start border border-blue-200">
+                        <div className="text-blue-700 text-sm mb-2">Ingresos Semana</div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-3xl font-bold text-blue-800">€{resumen.ingresosSemana.toFixed(2)}</span>
+                          <span className="text-blue-400 text-xl">€</span>
+                        </div>
+                        <div className="text-blue-600 text-sm">0 completadas</div>
+                      </div>
+                      <div className="bg-orange-100 rounded-xl shadow p-6 flex flex-col items-start border border-orange-200">
+                        <div className="text-orange-700 text-sm mb-2">Ingresos Totales</div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-3xl font-bold text-orange-800">€{resumen.ingresosTotales.toFixed(2)}</span>
+                          <span className="text-orange-400 text-xl">📈</span>
+                        </div>
+                        <div className="text-orange-600 text-sm">0 completadas</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold mb-2">Próximas Citas de Hoy</div>
+                    <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
+                      {proximasCitas.length === 0 ? (
+                        <div className="text-gray-400">No hay citas pendientes para hoy</div>
+                      ) : (
+                        <ul>
+                          {proximasCitas.map((cita, idx) => (
+                            <li key={idx}>{cita.nombre} - {cita.hora}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Aquí irán las otras pestañas: calendario, servicios, personal */}
+            </main>
+          </div>
+        );
+      }
 
       if (pantalla === 'login') {
         return (
