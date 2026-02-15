@@ -343,36 +343,90 @@ export default function App() {
                   <div style={{ fontSize: 18, color: '#14532d', margin: '12px 0 24px 0', textAlign: 'center' }}>
                     Paso 2: ¿Con qué especialista quieres la cita?
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, width: '100%', maxWidth: 480, margin: '0 auto' }}>
-                    {PROFESIONALES_UI[especialidad]?.map((pro) => (
-                      <button
-                        key={pro.nombre}
-                        onClick={() => setProfesionalSeleccionado(pro.nombre)}
-                        style={{
-                          background: profesionalSeleccionado === pro.nombre ? '#22c55e' : '#fff',
-                          border: 'none',
-                          borderRadius: 16,
-                          boxShadow: '0 2px 12px #18bc9c22',
-                          padding: '32px 0',
-                          fontWeight: 600,
-                          fontSize: 20,
-                          color: profesionalSeleccionado === pro.nombre ? '#fff' : '#14532d',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          transition: 'box-shadow 0.18s',
-                          outline: 'none',
-                          position: 'relative'
-                        }}
-                      >
-                        <span style={{ fontSize: 28, marginBottom: 8, background: profesionalSeleccionado === pro.nombre ? '#fff' : '#e5f9ed', color: profesionalSeleccionado === pro.nombre ? '#22c55e' : '#14532d', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{pro.icon}</span>
-                        {pro.nombre}
-                        {profesionalSeleccionado === pro.nombre && (
-                          <span style={{ position: 'absolute', top: 16, right: 16, background: '#fff', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e', fontWeight: 700, fontSize: 20, border: '2px solid #22c55e' }}>✔</span>
-                        )}
-                      </button>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: 32, width: '100%', maxWidth: 700, margin: '0 auto' }}>
+                    {/* Tarjetas de profesionales */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, flex: 1 }}>
+                      {PROFESIONALES_UI[especialidad]?.map((pro) => (
+                        <button
+                          key={pro.nombre}
+                          onClick={() => setProfesionalSeleccionado(pro.nombre)}
+                          style={{
+                            background: profesionalSeleccionado === pro.nombre ? pro.color : '#fff',
+                            border: profesionalSeleccionado === pro.nombre ? '2px solid #2563eb' : 'none',
+                            borderRadius: 16,
+                            boxShadow: profesionalSeleccionado === pro.nombre ? '0 4px 16px #2563eb33' : '0 2px 12px #18bc9c22',
+                            padding: '32px 0',
+                            fontWeight: 600,
+                            fontSize: 20,
+                            color: profesionalSeleccionado === pro.nombre ? '#fff' : '#14532d',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            transition: 'box-shadow 0.18s',
+                            outline: 'none',
+                            position: 'relative'
+                          }}
+                        >
+                          <span style={{ fontSize: 28, marginBottom: 8, background: profesionalSeleccionado === pro.nombre ? '#fff' : '#e5f9ed', color: profesionalSeleccionado === pro.nombre ? pro.color : '#14532d', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{pro.icon}</span>
+                          {pro.nombre}
+                          {profesionalSeleccionado === pro.nombre && (
+                            <span style={{ position: 'absolute', top: 16, right: 16, background: '#fff', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', fontWeight: 700, fontSize: 20, border: '2px solid #2563eb' }}>✔</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Lista dinámica de servicios */}
+                    <div style={{ flex: 1, minWidth: 220 }}>
+                      {profesionalSeleccionado && (
+                        <div style={{ background: '#f8fafc', borderRadius: 16, boxShadow: '0 2px 8px #2563eb22', padding: '24px 18px', color: '#14532d', fontWeight: 500 }}>
+                          <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Servicios disponibles</div>
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            {(() => {
+                              // Servicios por profesional
+                              const serviciosPorProfesional = {
+                                'Dr. Aparicio': [
+                                  { nombre: 'Consulta deportiva', precio: '40€' },
+                                  { nombre: 'Valoración funcional', precio: '55€' },
+                                  { nombre: 'Plan entrenamiento', precio: '60€' }
+                                ],
+                                'Dra. Benitez': [
+                                  { nombre: 'Consulta deportiva', precio: '40€' },
+                                  { nombre: 'Revisión médica', precio: '50€' },
+                                  { nombre: 'Plan nutricional', precio: '45€' }
+                                ],
+                                'Maria': [
+                                  { nombre: 'Sesión fisioterapia', precio: '35€' },
+                                  { nombre: 'Rehabilitación', precio: '50€' },
+                                  { nombre: 'Masaje deportivo', precio: '40€' }
+                                ],
+                                'Angel': [
+                                  { nombre: 'Sesión fisioterapia', precio: '35€' },
+                                  { nombre: 'Rehabilitación', precio: '50€' },
+                                  { nombre: 'Electroterapia', precio: '45€' }
+                                ],
+                                'Dra. Laura Gómez': [
+                                  { nombre: 'Consulta odontológica', precio: '30€' },
+                                  { nombre: 'Limpieza dental', precio: '45€' },
+                                  { nombre: 'Ortodoncia', precio: '60€' }
+                                ],
+                                'Dr. Sergio Diaz': [
+                                  { nombre: 'Consulta psicológica', precio: '35€' },
+                                  { nombre: 'Terapia individual', precio: '50€' },
+                                  { nombre: 'Terapia familiar', precio: '60€' }
+                                ]
+                              };
+                              return serviciosPorProfesional[profesionalSeleccionado]?.map((serv, idx) => (
+                                <li key={idx} style={{ marginBottom: 10, fontSize: 17, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span>{serv.nombre}</span>
+                                  <span style={{ color: '#2563eb', fontWeight: 700 }}>{serv.precio}</span>
+                                </li>
+                              ));
+                            })()}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <button
                     style={{
