@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import CalendarReserva from './CalendarReserva.jsx';
 
 export default function App() {
+      // Carrito de servicios seleccionados
+      const [carritoServicios, setCarritoServicios] = useState([]);
     const [citaCancelada, setCitaCancelada] = useState(false);
 
     const handleCancelarCita = () => {
@@ -436,12 +438,25 @@ export default function App() {
                                   { nombre: 'Evaluación Inicial', precio: '85€' }
                                 ]
                               };
-                              return serviciosPorProfesional[profesionalSeleccionado]?.map((serv, idx) => (
-                                <li key={idx} style={{ marginBottom: 10, fontSize: 17, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span>{serv.nombre}</span>
-                                  <span style={{ color: '#2563eb', fontWeight: 700 }}>{serv.precio}</span>
-                                </li>
-                              ));
+                              return serviciosPorProfesional[profesionalSeleccionado]?.map((serv, idx) => {
+                                const seleccionado = carritoServicios.some(s => s.nombre === serv.nombre && s.profesional === profesionalSeleccionado);
+                                return (
+                                  <li key={idx} style={{ marginBottom: 10, fontSize: 17, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>{serv.nombre}</span>
+                                    <span style={{ color: '#2563eb', fontWeight: 700 }}>{serv.precio}</span>
+                                    <button
+                                      style={{ marginLeft: 12, padding: '6px 12px', borderRadius: 8, border: seleccionado ? '2px solid #22c55e' : '2px solid #2563eb', background: seleccionado ? '#22c55e' : '#fff', color: seleccionado ? '#fff' : '#2563eb', fontWeight: 600, cursor: 'pointer' }}
+                                      onClick={() => {
+                                        if (seleccionado) {
+                                          setCarritoServicios(carritoServicios.filter(s => !(s.nombre === serv.nombre && s.profesional === profesionalSeleccionado)));
+                                        } else {
+                                          setCarritoServicios([...carritoServicios, { ...serv, profesional: profesionalSeleccionado }]);
+                                        }
+                                      }}
+                                    >{seleccionado ? 'Quitar' : 'Añadir'}</button>
+                                  </li>
+                                );
+                              });
                             })()}
                           </ul>
                         </div>
@@ -473,24 +488,50 @@ export default function App() {
                 </>
               )}
               {modoReserva === 'paciente' && stepReserva === 2 && (
-                <CalendarReserva
-                  onReservaConfirmada={({ fecha, hora, nombre, telefono }) => {
-                    setConfirmar(true);
-                    setAgenda(prev => [...prev, {
-                      hora,
-                      nombre,
-                      telefono,
-                      fecha,
-                      especialidad,
-                      profesional: profesionalSeleccionado
-                    }]);
-                  }}
-                  onVolverInicio={() => {
-                    setStepReserva(0);
-                    setProfesionalSeleccionado('');
-                  }}
-                  onCancelarCita={handleCancelarCita}
-                />
+                <>
+                  <CalendarReserva
+                    onReservaConfirmada={({ fecha, hora, nombre, telefono }) => {
+                      setConfirmar(true);
+                      setAgenda(prev => [...prev, {
+                        hora,
+                        nombre,
+                        telefono,
+                        fecha,
+                        especialidad,
+                        profesional: profesionalSeleccionado,
+                        servicios: carritoServicios
+                      }]);
+                      setCarritoServicios([]);
+                    }}
+                    onVolverInicio={() => {
+                      setStepReserva(0);
+                      setProfesionalSeleccionado('');
+                      setCarritoServicios([]);
+                    }}
+                    onCancelarCita={handleCancelarCita}
+                  />
+                  {/* Carrito de compra */}
+                  {carritoServicios.length > 0 && (
+                    <div style={{ marginTop: 32, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #2563eb22', padding: '18px 24px', color: '#14532d', fontWeight: 500, maxWidth: 420 }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Carrito de servicios seleccionados</div>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {carritoServicios.map((serv, idx) => (
+                          <li key={idx} style={{ marginBottom: 8, fontSize: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>{serv.nombre} <span style={{ color: '#888', fontSize: 14 }}>({serv.profesional})</span></span>
+                            <span style={{ color: '#2563eb', fontWeight: 700 }}>{serv.precio}</span>
+                            <button
+                              style={{ marginLeft: 12, padding: '4px 10px', borderRadius: 8, border: '2px solid #e11d48', background: '#fff', color: '#e11d48', fontWeight: 600, cursor: 'pointer' }}
+                              onClick={() => setCarritoServicios(carritoServicios.filter((_, i) => i !== idx))}
+                            >Eliminar</button>
+                          </li>
+                        ))}
+                      </ul>
+                      <div style={{ marginTop: 12, fontWeight: 700, fontSize: 18, color: '#2563eb' }}>
+                        Total: {carritoServicios.reduce((acc, serv) => acc + parseFloat(serv.precio.replace('€','')), 0)}€
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
                     {citaCancelada && (
                       <div style={{
