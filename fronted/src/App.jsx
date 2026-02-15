@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import CalendarReserva from './CalendarReserva.jsx';
+import CalendarioAdminMes from './CalendarioAdminMes.jsx';
 
 export default function App() {
       // Carrito de servicios seleccionados
@@ -216,6 +217,10 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              )}
+              {
+              adminTab === 'calendario' && (
+                <CalendarioAdminMes />
               )}
               {/* Aquí irán las otras pestañas: calendario, servicios, personal */}
             </main>
