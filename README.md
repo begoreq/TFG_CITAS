@@ -1,88 +1,122 @@
-# SaludCitas - Gestor de Citas Médicas
+# MediCitas - Sistema de Gestión de Citas Médicas
 
-Una aplicación web moderna para gestionar citas médicas en clínicas y hospitales.
+Aplicación web de gestión de citas genérica, diseñada para adaptarse a cualquier empresa que necesite organizar reservas, agendas y disponibilidad del personal.
 
-## Características
+## Tecnologías
 
-- **Login**: Autenticación de usuarios
-- **Agenda del Médico**: Visualización de citas programadas
-- **Nueva Reserva**: Reserva de nuevas citas médicas
-- **Ficha Clínica**: Información detallada del paciente
-- **Selección de Horarios**: Grid interactivo de horas disponibles
-- **Diseño Responsivo**: Interfaz limpia y profesional
+- **Frontend:** React 19 + Vite + Tailwind CSS
+- **Backend:** Laravel 13 (PHP) + API REST
+- **Base de datos:** SQLite (desarrollo) / MySQL (producción con Docker)
+- **Autenticación:** Laravel Sanctum (tokens)
+- **Contenedores:** Docker + Docker Compose
 
-## Tecnologías Utilizadas
-
-- React 19.2.0
-- Vite 7.3.1
-- CSS Puro (sin frameworks)
-
-## Instalación
-
-1. Clona este repositorio
-2. Instala las dependencias:
-```bash
-cd fronted
-npm install
-```
-
-3. Inicia el servidor de desarrollo:
-```bash
-npm run dev
-```
-
-4. Abre tu navegador en `http://localhost:5176/`
-
-## Estructura del Proyecto
+## Estructura del proyecto
 
 ```
 TFG_CITAS/
-├── backend/
-├── fronted/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── AgendaMedico.jsx
-│   │   ├── NuevaReserva.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
-└── README.md
+├── backend/              # API REST Laravel
+│   ├── app/
+│   │   ├── Http/Controllers/Api/   # Controladores CRUD
+│   │   └── Models/                 # Modelos Eloquent
+│   ├── database/
+│   │   ├── migrations/             # Migraciones de BD
+│   │   └── seeders/                # Datos iniciales
+│   └── routes/api.php              # Rutas de la API
+├── fronted/              # SPA React
+│   └── src/
+│       ├── api.js                  # Cliente Axios
+│       ├── App.jsx                 # Enrutamiento principal
+│       └── pages/                  # Páginas/componentes
+│           ├── Login.jsx
+│           ├── AdminLayout.jsx
+│           ├── Dashboard.jsx
+│           ├── AdminServicios.jsx
+│           ├── AdminPersonal.jsx
+│           ├── AdminCalendario.jsx
+│           └── PacienteLayout.jsx
+├── docker-compose.yml    # Orquestación Docker
+└── DIARIO.md             # Diario de desarrollo
 ```
+
+## Instalación y puesta en marcha
+
+### 1. Backend
+
+```bash
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
+
+El backend estará en `http://localhost:8000`.
+
+### 2. Frontend
+
+```bash
+cd fronted
+npm install
+npm run dev
+```
+
+El frontend estará en `http://localhost:5173`.
+
+### 3. Credenciales de prueba
+
+| Rol       | Email               | Contraseña |
+|-----------|---------------------|------------|
+| Admin     | admin@clinica.com   | admin123   |
+| Paciente  | usuario@clinica.com | usuario123 |
+
+## Uso con Docker
+
+```bash
+docker-compose up --build
+```
+
+## Endpoints principales de la API
+
+| Método | Ruta                     | Descripción              | Auth |
+|--------|--------------------------|--------------------------|------|
+| POST   | /api/login               | Iniciar sesión           | No   |
+| POST   | /api/register            | Registrar paciente       | No   |
+| GET    | /api/especialidades      | Listar especialidades    | No   |
+| GET    | /api/servicios           | Listar servicios         | No   |
+| GET    | /api/profesionales       | Listar profesionales     | No   |
+| GET    | /api/citas               | Listar citas             | Sí   |
+| POST   | /api/citas               | Crear cita               | Sí   |
+| PUT    | /api/citas/{id}          | Modificar cita           | Sí   |
+| DELETE | /api/citas/{id}          | Cancelar cita            | Sí   |
+| GET    | /api/dashboard           | Métricas dashboard       | Sí   |
+| POST   | /api/servicios           | Crear servicio           | Sí   |
+| PUT    | /api/servicios/{id}      | Editar servicio          | Sí   |
+| DELETE | /api/servicios/{id}      | Eliminar servicio        | Sí   |
+| POST   | /api/profesionales       | Crear profesional        | Sí   |
+| PUT    | /api/profesionales/{id}  | Editar profesional       | Sí   |
+| DELETE | /api/profesionales/{id}  | Eliminar profesional     | Sí   |
+
+## Roles del sistema
+
+- **Administrador:** Gestión total (servicios, personal, calendario, dashboard)
+- **Paciente:** Reserva, consulta y cancelación de sus citas
 
 ## Pantallas
 
-### 1. Login
-Pantalla de autenticación para acceder al sistema.
+### Paciente
+1. **Login** — Autenticación con email y contraseña
+2. **Selección de especialidad** — Medicina Deportiva, Fisioterapia, Odontología, Psicología
+3. **Profesional y servicios** — Selección de profesional y carrito de servicios
+4. **Calendario** — Selección de fecha y hora para confirmar la cita
+5. **Mis Citas** — Listado de citas con opción de anulación
 
-### 2. Agenda del Médico
-Visualiza todas las citas del día con opciones para ver detalles.
+### Administrador
+1. **Dashboard** — KPIs de la clínica (citas, ingresos, pacientes)
+2. **Calendario** — Agenda con filtros por especialidad
+3. **Servicios** — CRUD completo de servicios
+4. **Personal** — CRUD completo de profesionales
 
-### 3. Nueva Cita Médica
-Formulario para reservar nuevas citas con:
-- Selección de especialidad
-- Selección de médico
-- Selección de fecha
-- Selección de horario
+## Autora
 
-### 4. Ficha Clínica del Paciente
-Información completa del paciente incluyendo:
-- Datos médicos (peso, altura, tipo de sangre)
-- Alergias
-- Antecedentes
-
-## Paleta de Colores
-
-- **Turquesa/Cian**: #17a2b8
-- **Azul Oscuro**: #2C3E50
-- **Gris Claro**: #f8f9fa
-- **Rojo (Alergias)**: #dc3545
-
-## Autor
-
-Creado como proyecto de Trabajo Final de Grado (TFG)
-
-## Licencia
-
-Este proyecto está disponible bajo licencia MIT.
+Begoña Requena Atencia — TFG DAW (CESUR)

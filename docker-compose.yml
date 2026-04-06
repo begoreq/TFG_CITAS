@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL
+  db:
+    image: mysql:8.0
+    container_name: medicitas_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: medicitas
+      MYSQL_USER: medicitas
+      MYSQL_PASSWORD: medicitas
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # Backend Laravel
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medicitas_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - db
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: medicitas
+      DB_USERNAME: medicitas
+      DB_PASSWORD: medicitas
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./fronted
+      dockerfile: Dockerfile
+    container_name: medicitas_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./fronted:/app
+      - /app/node_modules
+
+volumes:
+  db_data:

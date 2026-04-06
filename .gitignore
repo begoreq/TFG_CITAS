@@ -9,3 +9,14 @@ dist/
 .idea/
 *.swp
 *.swo
+
+# Backend Laravel
+backend/vendor/
+backend/storage/*.key
+backend/storage/logs/
+backend/.env
+backend/database/*.sqlite
+backend/bootstrap/cache/
+
+# Frontend build
+fronted/dist/
