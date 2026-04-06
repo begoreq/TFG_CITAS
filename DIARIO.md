@@ -46,8 +46,28 @@
 - Para desarrollo local se mantuvo SQLite como base de datos por simplicidad
 
 ## Decisiones técnicas clave
-1. **SQLite para desarrollo:** Más sencillo que montar MySQL localmente. Docker usa MySQL para producción.
-2. **Sanctum con tokens (no SPA auth):** Más simple para una API REST pura y compatible con cualquier cliente.
-3. **Componentes modulares:** Cada página del admin es un componente independiente con su propio estado y llamadas API.
-4. **Validación en servidor:** Todos los controladores validan los datos de entrada con las reglas de Laravel.
-5. **Protección contra solapamiento:** El endpoint de creación de citas comprueba que no exista otra cita del mismo profesional en la misma fecha y hora.
+1. **Sanctum con tokens (no SPA auth):** Inicialmente se configuró `statefulApi()` en Sanctum, lo que activaba verificación CSRF para peticiones desde localhost. Esto bloqueaba el login desde el navegador. Se eliminó `statefulApi()` para usar autenticación puramente por Bearer token, más simple y compatible con una API REST pura.
+2. **Componentes modulares:** Cada página del admin es un componente independiente con su propio estado y llamadas API. PacienteLayout gestiona un flujo de 3 pasos con estado local.
+3. **Validación en servidor:** Todos los controladores validan los datos de entrada con las reglas de Laravel.
+4. **Protección contra solapamiento:** El endpoint de creación de citas comprueba que no exista otra cita del mismo profesional en la misma fecha y hora.
+5. **Docker con 3 servicios:** MySQL (db), backend Laravel (PHP-CLI) y frontend React (Node), comunicados en red interna Docker.
+
+## Fase 6: Corrección de bugs y mejoras
+- **Bug CSRF resuelto:** Al pulsar los botones de acceso rápido (admin/paciente) no se entraba. La causa era que `$middleware->statefulApi()` en `bootstrap/app.php` activaba la verificación CSRF de Sanctum para peticiones desde `localhost`. Como el frontend envía el header `Origin: http://localhost:5173`, Sanctum lo detectaba como dominio "stateful" y exigía un token CSRF que nunca se enviaba. Solución: eliminar `statefulApi()` y usar solo Bearer tokens.
+- **Bug del calendario (días desalineados):** El array `SEMANA` empezaba por `'dom'` pero el cálculo de celdas vacías usaba fórmula ISO (lunes primero), haciendo que los días cayeran en la columna incorrecta. Corregido poniendo `SEMANA = ['lun', ..., 'dom']`.
+- **Calendario Admin mejorado (estilo Fresha):**
+  - Dots de color por especialidad debajo de cada día: cada punto indica una especialidad con cita ese día.
+  - Leyenda de colores debajo del calendario.
+  - Panel lateral fijo con el detalle de citas al pulsar un día (hora, paciente, profesional, servicios, estado), con border-left del color de la especialidad.
+  - Filtros de especialidad tipo pill con nombre + icono y toggle on/off.
+  - Navegación entre meses con flechas y botón "Hoy".
+- **Calendario Paciente mejorado:** navegación entre meses y fecha legible (ej. "lunes, 6 de abril") en vez del formato ISO crudo.
+- **Highlight de "hoy" corregido:** el día actual solo se resalta en azul cuando estás viendo el mes correspondiente, no siempre el día N de cualquier mes.
+
+## Dificultades encontradas
+| Problema | Causa | Solución |
+|---|---|---|
+| Botones de login no funcionan desde el navegador | `statefulApi()` activaba CSRF para `localhost` | Eliminar `statefulApi()`, usar solo Bearer tokens |
+| Días del calendario en columnas incorrectas | Array SEMANA empezaba en domingo pero offset calculado para lunes | Reordenar SEMANA a `['lun',...,'dom']` |
+| Solo se ve el mes actual en calendarios | Variables `year`/`month` fijas a `new Date()` | Añadir estado `mesVista` con navegación |
+| Fecha mostrada como `2026-04-06` en selector de horas | Se imprimía la string ISO directamente | Usar `toLocaleDateString('es-ES', {...})` |
