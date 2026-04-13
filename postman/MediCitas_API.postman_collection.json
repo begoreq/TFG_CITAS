@@ -1,0 +1,1229 @@
+{
+	"info": {
+		"name": "MediCitas API",
+		"description": "Colección completa de la API REST de MediCitas — Sistema de Gestión de Citas Médicas.\n\n## Instrucciones de uso\n\n1. Importa esta colección y el entorno `MediCitas_Local` en Postman.\n2. Ejecuta primero **Login Admin** para obtener el token.\n3. El token se guarda automáticamente en la variable `{{token}}`.\n4. El resto de peticiones usan `{{token}}` en la cabecera Authorization.\n\n## Roles disponibles\n- **Admin:** admin@clinica.com / admin123\n- **Profesional:** dr.aparicio@clinica.com / profesional123\n- **Paciente:** usuario@clinica.com / usuario123",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [],
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Endpoints de autenticación: login, registro, logout y datos del usuario.",
+			"item": [
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.environment.set('token', json.token);",
+									"    pm.environment.set('user_id', json.user.id);",
+									"    pm.test('Login exitoso', function () {",
+									"        pm.expect(json.user.role).to.eql('admin');",
+									"    });",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@clinica.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						},
+						"description": "Inicia sesión como administrador. El token se guarda automáticamente en la variable `token`."
+					}
+				},
+				{
+					"name": "Login Profesional",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.environment.set('token', json.token);",
+									"    pm.environment.set('user_id', json.user.id);",
+									"    pm.test('Login exitoso como profesional', function () {",
+									"        pm.expect(json.user.role).to.eql('profesional');",
+									"    });",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"dr.aparicio@clinica.com\",\n  \"password\": \"profesional123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						},
+						"description": "Inicia sesión como profesional. El token se guarda automáticamente."
+					}
+				},
+				{
+					"name": "Login Paciente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.environment.set('token', json.token);",
+									"    pm.environment.set('user_id', json.user.id);",
+									"    pm.test('Login exitoso como paciente', function () {",
+									"        pm.expect(json.user.role).to.eql('paciente');",
+									"    });",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"usuario@clinica.com\",\n  \"password\": \"usuario123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						},
+						"description": "Inicia sesión como paciente. El token se guarda automáticamente."
+					}
+				},
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Registro exitoso — 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.environment.set('token', json.token);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Paciente Test\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": ["{{base_url}}"],
+							"path": ["register"]
+						},
+						"description": "Registra un nuevo paciente. El token se guarda automáticamente."
+					}
+				},
+				{
+					"name": "Me (usuario autenticado)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Devuelve datos del usuario — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('id');",
+									"    pm.expect(json).to.have.property('email');",
+									"    pm.expect(json).to.have.property('role');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/me",
+							"host": ["{{base_url}}"],
+							"path": ["me"]
+						},
+						"description": "Devuelve los datos del usuario autenticado con el token actual."
+					}
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Logout exitoso — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.environment.unset('token');"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": ["{{base_url}}"],
+							"path": ["logout"]
+						},
+						"description": "Cierra sesión y elimina el token actual. Limpia la variable de entorno."
+					}
+				}
+			]
+		},
+		{
+			"name": "Especialidades",
+			"description": "CRUD de especialidades médicas. Las rutas GET son públicas; POST, PUT y DELETE requieren rol admin.",
+			"item": [
+				{
+					"name": "Listar especialidades",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista especialidades — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    if (json.length > 0) {",
+									"        pm.environment.set('especialidad_id', json[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/especialidades",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades"]
+						}
+					}
+				},
+				{
+					"name": "Ver especialidad",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Detalle de especialidad — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/especialidades/{{especialidad_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades", "{{especialidad_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Crear especialidad (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Especialidad creada — 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Dermatología\",\n  \"icono\": \"🧴\",\n  \"color\": \"#a855f7\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/especialidades",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar especialidad (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Especialidad actualizada — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Dermatología Avanzada\",\n  \"icono\": \"🧴\",\n  \"color\": \"#a855f7\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/especialidades/{{especialidad_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades", "{{especialidad_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar especialidad (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Especialidad eliminada — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/especialidades/{{especialidad_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades", "{{especialidad_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Profesionales",
+			"description": "CRUD de profesionales. GET /profesionales es público. El resto requiere rol admin.",
+			"item": [
+				{
+					"name": "Listar profesionales",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista profesionales — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    if (json.length > 0) {",
+									"        pm.environment.set('profesional_id', json[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/profesionales",
+							"host": ["{{base_url}}"],
+							"path": ["profesionales"]
+						}
+					}
+				},
+				{
+					"name": "Ver profesional (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Detalle de profesional — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/profesionales/{{profesional_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["profesionales", "{{profesional_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Crear profesional (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Profesional creado — 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellidos\": \"Martínez López\",\n  \"email\": \"carlos.martinez@clinica.com\",\n  \"telefono\": \"666555444\",\n  \"especialidad_id\": {{especialidad_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profesionales",
+							"host": ["{{base_url}}"],
+							"path": ["profesionales"]
+						},
+						"description": "Crea un profesional y su usuario asociado automáticamente con rol 'profesional'."
+					}
+				},
+				{
+					"name": "Actualizar profesional (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Profesional actualizado — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellidos\": \"Martínez López\",\n  \"email\": \"carlos.martinez@clinica.com\",\n  \"telefono\": \"666555333\",\n  \"especialidad_id\": {{especialidad_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profesionales/{{profesional_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["profesionales", "{{profesional_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar profesional (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Profesional eliminado — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/profesionales/{{profesional_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["profesionales", "{{profesional_id}}"]
+						},
+						"description": "Elimina el profesional y su usuario asociado."
+					}
+				}
+			]
+		},
+		{
+			"name": "Servicios",
+			"description": "CRUD de servicios médicos. GET /servicios es público. El resto requiere rol admin.",
+			"item": [
+				{
+					"name": "Listar servicios",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista servicios — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    if (json.length > 0) {",
+									"        pm.environment.set('servicio_id', json[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/servicios",
+							"host": ["{{base_url}}"],
+							"path": ["servicios"]
+						}
+					}
+				},
+				{
+					"name": "Ver servicio (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Detalle de servicio — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/servicios/{{servicio_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servicios", "{{servicio_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Crear servicio (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Servicio creado — 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Consulta de prueba\",\n  \"descripcion\": \"Servicio de prueba para Postman\",\n  \"precio\": 50.00,\n  \"duracion\": 30,\n  \"especialidad_id\": {{especialidad_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servicios",
+							"host": ["{{base_url}}"],
+							"path": ["servicios"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar servicio (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Servicio actualizado — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Consulta actualizada\",\n  \"descripcion\": \"Descripción actualizada\",\n  \"precio\": 65.00,\n  \"duracion\": 45,\n  \"especialidad_id\": {{especialidad_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servicios/{{servicio_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servicios", "{{servicio_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar servicio (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Servicio eliminado — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/servicios/{{servicio_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servicios", "{{servicio_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Citas",
+			"description": "CRUD de citas médicas. Requiere autenticación. Accesible para todos los roles autenticados.",
+			"item": [
+				{
+					"name": "Listar citas",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista citas — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    if (json.length > 0) {",
+									"        pm.environment.set('cita_id', json[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/citas",
+							"host": ["{{base_url}}"],
+							"path": ["citas"]
+						},
+						"description": "Devuelve todas las citas. Filtrable por query params: ?fecha=2026-04-10&profesional_id=1&paciente_id=2"
+					}
+				},
+				{
+					"name": "Listar citas (filtro por fecha)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Citas filtradas por fecha — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/citas?fecha=2026-04-12",
+							"host": ["{{base_url}}"],
+							"path": ["citas"],
+							"query": [
+								{ "key": "fecha", "value": "2026-04-12" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Ver cita",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Detalle de cita — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/citas/{{cita_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "{{cita_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Crear cita",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Cita creada — 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.environment.set('cita_id', json.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"paciente_id\": {{user_id}},\n  \"profesional_id\": {{profesional_id}},\n  \"fecha\": \"2026-04-15\",\n  \"hora\": \"10:00\",\n  \"servicios\": [{{servicio_id}}]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/citas",
+							"host": ["{{base_url}}"],
+							"path": ["citas"]
+						},
+						"description": "Crea una cita. Valida anti-duplicados y bloquea domingos/festivos (422)."
+					}
+				},
+				{
+					"name": "Actualizar cita (estado/notas)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Cita actualizada — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"estado\": \"completada\",\n  \"notas_medicas\": \"Paciente atendido sin incidencias\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/citas/{{cita_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "{{cita_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Cancelar cita (soft delete)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Cita cancelada — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/citas/{{cita_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "{{cita_id}}"]
+						},
+						"description": "Cambia el estado de la cita a 'cancelada' en lugar de borrarla."
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"description": "Endpoints de dashboard para admin y profesional.",
+			"item": [
+				{
+					"name": "Dashboard Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Dashboard admin — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('citasHoy');",
+									"    pm.expect(json).to.have.property('ingresosTotales');",
+									"    pm.expect(json).to.have.property('ingresos7dias');",
+									"    pm.expect(json).to.have.property('ultimasCitas');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard"]
+						},
+						"description": "KPIs del admin: citas hoy/semana, ingresos, pacientes, gráfico 7 días, últimas 5 citas. Requiere token de admin."
+					}
+				},
+				{
+					"name": "Dashboard Profesional",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Dashboard profesional — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('pendientes');",
+									"    pm.expect(json).to.have.property('atendidas');",
+									"    pm.expect(json).to.have.property('ingresosDia');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/mi-dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["mi-dashboard"]
+						},
+						"description": "KPIs del profesional: pendientes (confirmadas hoy), atendidas (completadas hoy), ingresos del día. Requiere token de profesional."
+					}
+				},
+				{
+					"name": "Mis Pacientes (profesional)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista de pacientes — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    if (json.length > 0) {",
+									"        pm.environment.set('paciente_id', json[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/mis-pacientes",
+							"host": ["{{base_url}}"],
+							"path": ["mis-pacientes"]
+						},
+						"description": "Listado de pacientes únicos que han tenido citas con este profesional. Requiere token de profesional."
+					}
+				},
+				{
+					"name": "Ficha Paciente (profesional)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Ficha del paciente — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('paciente');",
+									"    pm.expect(json).to.have.property('citas');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/ficha-paciente/{{paciente_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["ficha-paciente", "{{paciente_id}}"]
+						},
+						"description": "Ficha completa: datos de contacto + historial de citas del paciente con este profesional. Requiere token de profesional."
+					}
+				}
+			]
+		},
+		{
+			"name": "Usuarios (admin)",
+			"description": "Gestión de usuarios del sistema. Requiere rol admin.",
+			"item": [
+				{
+					"name": "Listar usuarios",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista usuarios — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    if (json.length > 1) {",
+									"        pm.environment.set('target_user_id', json[1].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						}
+					}
+				},
+				{
+					"name": "Cambiar rol de usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Rol actualizado — 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"role\": \"paciente\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/{{target_user_id}}/role",
+							"host": ["{{base_url}}"],
+							"path": ["users", "{{target_user_id}}", "role"]
+						},
+						"description": "Cambia el rol de un usuario. Valores válidos: admin, profesional, paciente."
+					}
+				}
+			]
+		},
+		{
+			"name": "Tests de seguridad",
+			"description": "Peticiones que verifican que la API rechaza accesos no autorizados correctamente.",
+			"item": [
+				{
+					"name": "Acceso sin token → 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Sin token devuelve 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/citas",
+							"host": ["{{base_url}}"],
+							"path": ["citas"]
+						},
+						"description": "Intenta acceder a ruta protegida sin Bearer token. Debe devolver 401."
+					}
+				},
+				{
+					"name": "Paciente accede a admin → 403",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Paciente no puede acceder a admin — 403', function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "Requiere estar logueado como paciente. El middleware CheckRole debe devolver 403 al intentar acceder a /users."
+					}
+				},
+				{
+					"name": "Cita en domingo → 422",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Domingo rechazado — 422', function () {",
+									"    pm.response.to.have.status(422);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"paciente_id\": {{user_id}},\n  \"profesional_id\": {{profesional_id}},\n  \"fecha\": \"2026-04-19\",\n  \"hora\": \"10:00\",\n  \"servicios\": [{{servicio_id}}]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/citas",
+							"host": ["{{base_url}}"],
+							"path": ["citas"]
+						},
+						"description": "El 19/04/2026 es domingo. El backend debe rechazarlo con 422."
+					}
+				}
+			]
+		}
+	]
+}

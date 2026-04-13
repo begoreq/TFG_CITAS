@@ -3,6 +3,7 @@ import Dashboard from './Dashboard';
 import AdminServicios from './AdminServicios';
 import AdminPersonal from './AdminPersonal';
 import AdminCalendario from './AdminCalendario';
+import AdminUsuarios from './AdminUsuarios';
 
 export default function AdminLayout({ user, onLogout }) {
   const [tab, setTab] = useState('dashboard');
@@ -12,6 +13,7 @@ export default function AdminLayout({ user, onLogout }) {
     { id: 'calendario', label: 'Calendario', icon: '📅' },
     { id: 'servicios', label: 'Servicios', icon: '💼' },
     { id: 'personal', label: 'Personal', icon: '🧑‍⚕️' },
+    { id: 'usuarios', label: 'Usuarios', icon: '👥' },
   ];
 
   return (
@@ -70,6 +72,7 @@ export default function AdminLayout({ user, onLogout }) {
         {tab === 'calendario' && <AdminCalendario />}
         {tab === 'servicios' && <AdminServicios />}
         {tab === 'personal' && <AdminPersonal />}
+        {tab === 'usuarios' && <AdminUsuarios />}
       </main>
     </div>
   );

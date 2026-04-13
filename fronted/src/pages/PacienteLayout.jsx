@@ -100,6 +100,24 @@ export default function PacienteLayout({ user, onLogout }) {
   const SEMANA = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
   const esHoyMes = mesVista.year === hoy.getFullYear() && mesVista.month === hoy.getMonth();
 
+  // Festivos nacionales España
+  const esFestivo = (fecha) => {
+    const y = new Date(fecha).getFullYear();
+    const festivos = [
+      `${y}-01-01`, `${y}-01-06`, `${y}-05-01`, `${y}-08-15`,
+      `${y}-10-12`, `${y}-11-01`, `${y}-12-06`, `${y}-12-08`, `${y}-12-25`,
+    ];
+    return festivos.includes(fecha);
+  };
+
+  const esDomingo = (year, month, day) => new Date(year, month, day).getDay() === 0;
+
+  const diaNoDisponible = (dia) => {
+    const fecha = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const esPasado = new Date(mesVista.year, mesVista.month, dia) < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    return esPasado || esDomingo(mesVista.year, mesVista.month, dia) || esFestivo(fecha);
+  };
+
   const mesAnterior = () => {
     setMesVista((prev) => {
       const m = prev.month - 1;
@@ -293,15 +311,15 @@ export default function PacienteLayout({ user, onLogout }) {
                   {[...Array(primerDia === 0 ? 6 : primerDia - 1)].map((_, i) => <div key={'e' + i}></div>)}
                   {Array.from({ length: diasMes }, (_, i) => i + 1).map((dia) => {
                     const fecha = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-                    const esPasado = new Date(mesVista.year, mesVista.month, dia) < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                    const noDisponible = diaNoDisponible(dia);
                     return (
                       <button
                         key={dia}
-                        onClick={() => { if (!esPasado) { setFechaSel(fecha); setHoraSel(null); } }}
-                        disabled={esPasado}
+                        onClick={() => { if (!noDisponible) { setFechaSel(fecha); setHoraSel(null); } }}
+                        disabled={noDisponible}
                         className={`rounded-full w-9 h-9 mx-auto font-medium text-sm transition ${
                           fechaSel === fecha ? 'bg-blue-600 text-white' :
-                          esPasado ? 'text-gray-300 cursor-not-allowed' :
+                          noDisponible ? 'text-gray-300 cursor-not-allowed' :
                           esHoyMes && dia === hoy.getDate() ? 'bg-blue-100 text-blue-700' :
                           'hover:bg-blue-50 text-gray-700'
                         }`}

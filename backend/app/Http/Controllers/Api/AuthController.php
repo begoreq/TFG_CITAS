@@ -25,6 +25,10 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($user->role === 'profesional') {
+            $user->load('profesional.especialidad');
+        }
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([

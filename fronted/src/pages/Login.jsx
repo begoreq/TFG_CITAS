@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import api from '../api';
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onGoToRegister }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -110,8 +110,18 @@ export default function Login({ onLogin }) {
 
           <div className="border-t border-gray-200 my-6"></div>
 
+          <p className="text-center text-sm text-gray-600 mb-4">
+            ¿No tienes cuenta?{' '}
+            <button
+              onClick={onGoToRegister}
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Regístrate aquí
+            </button>
+          </p>
+
           <div className="text-gray-800 font-medium text-sm mb-3">Acceso rápido de prueba:</div>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={() => loginRapido('admin@clinica.com', 'admin123')}
               className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-4 flex flex-col items-center gap-1 hover:bg-gray-100 transition cursor-pointer"
@@ -119,6 +129,14 @@ export default function Login({ onLogin }) {
               <span className="text-2xl text-blue-600">🔒</span>
               <span className="font-bold text-sm">Administrador</span>
               <span className="text-gray-500 text-xs">admin@clinica.com</span>
+            </button>
+            <button
+              onClick={() => loginRapido('aparicio@clinica.com', 'password123')}
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-4 flex flex-col items-center gap-1 hover:bg-gray-100 transition cursor-pointer"
+            >
+              <span className="text-2xl text-green-600">🩺</span>
+              <span className="font-bold text-sm">Profesional</span>
+              <span className="text-gray-500 text-xs">aparicio@clinica.com</span>
             </button>
             <button
               onClick={() => loginRapido('usuario@clinica.com', 'usuario123')}
