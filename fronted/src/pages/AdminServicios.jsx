@@ -77,12 +77,14 @@ export default function AdminServicios() {
           <h1 className="text-3xl font-bold">Servicios</h1>
           <p className="text-gray-500">Gestión de los servicios de la clínica</p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-        >
-          + Nuevo Servicio
-        </button>
+        {!showForm && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+          >
+            + Nuevo Servicio
+          </button>
+        )}
       </div>
 
       {/* Formulario */}
@@ -107,7 +109,8 @@ export default function AdminServicios() {
             </div>
             <div>
               <label htmlFor="srv-duracion" className="block font-semibold mb-1 text-sm">Duración (min) *</label>
-              <input id="srv-duracion" name="duracion_minutos" type="number" min="1" value={form.duracion_minutos} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="srv-duracion" name="duracion_minutos" type="number" min="1" max="120" value={form.duracion_minutos} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p className="text-xs text-gray-500 mt-1">Máximo permitido: 120 minutos.</p>
             </div>
             <div className="md:col-span-2">
               <label htmlFor="srv-desc" className="block font-semibold mb-1 text-sm">Descripción</label>
@@ -148,8 +151,22 @@ export default function AdminServicios() {
                   <td className="px-6 py-4 font-bold text-blue-600">€{Number(s.precio).toFixed(2)}</td>
                   <td className="px-6 py-4 text-gray-600">{s.duracion_minutos} min</td>
                   <td className="px-6 py-4 flex gap-2">
-                    <button onClick={() => handleEditar(s)} className="text-blue-600 hover:text-blue-800 font-semibold text-sm">Editar</button>
-                    <button onClick={() => handleEliminar(s.id)} className="text-red-600 hover:text-red-800 font-semibold text-sm">Eliminar</button>
+                    <button
+                      onClick={() => handleEditar(s)}
+                      title="Editar"
+                      aria-label="Editar servicio"
+                      className="text-blue-600 hover:text-blue-800 font-semibold text-lg leading-none"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleEliminar(s.id)}
+                      title="Eliminar"
+                      aria-label="Eliminar servicio"
+                      className="text-red-600 hover:text-red-800 font-semibold text-lg leading-none"
+                    >
+                      🗑️
+                    </button>
                   </td>
                 </tr>
               ))

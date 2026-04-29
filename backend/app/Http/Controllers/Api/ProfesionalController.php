@@ -21,13 +21,15 @@ class ProfesionalController extends Controller
             'nombre' => 'required|string|max:255',
             'apellidos' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users',
-            'telefono' => 'nullable|string|max:20',
+            'telefono' => ['nullable', 'string', 'max:15', 'regex:/^[0-9+()\- ]{9,15}$/'],
             'especialidad_id' => 'required|exists:especialidades,id',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'email.required' => 'El email es obligatorio.',
             'email.email' => 'El formato del email no es valido.',
             'email.unique' => 'Ese email ya esta en uso por otro usuario.',
+            'telefono.max' => 'El telefono no puede superar 15 caracteres.',
+            'telefono.regex' => 'El telefono debe tener entre 9 y 15 caracteres validos.',
             'especialidad_id.required' => 'La especialidad es obligatoria.',
             'especialidad_id.exists' => 'La especialidad seleccionada no existe.',
         ]);
@@ -62,8 +64,11 @@ class ProfesionalController extends Controller
         $request->validate([
             'nombre' => 'sometimes|string|max:255',
             'apellidos' => 'nullable|string|max:255',
-            'telefono' => 'nullable|string|max:20',
+            'telefono' => ['nullable', 'string', 'max:15', 'regex:/^[0-9+()\- ]{9,15}$/'],
             'especialidad_id' => 'sometimes|exists:especialidades,id',
+        ], [
+            'telefono.max' => 'El telefono no puede superar 15 caracteres.',
+            'telefono.regex' => 'El telefono debe tener entre 9 y 15 caracteres validos.',
         ]);
 
         $profesional->update($request->only('nombre', 'apellidos', 'telefono', 'especialidad_id'));

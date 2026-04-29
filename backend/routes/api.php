@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/mi-dashboard', [CitaController::class, 'dashboardProfesional']);
         Route::get('/mis-pacientes', [CitaController::class, 'misPacientes']);
         Route::get('/ficha-paciente/{paciente}', [CitaController::class, 'fichaPaciente']);
+        Route::put('/pacientes/{paciente}', [CitaController::class, 'updatePaciente']);
     });
 
     // Solo admin

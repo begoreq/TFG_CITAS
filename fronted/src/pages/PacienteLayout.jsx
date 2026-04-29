@@ -31,6 +31,8 @@ export default function PacienteLayout({ user, onLogout }) {
     30,
   );
 
+  const totalReservaEuros = carritoServicios.reduce((acc, s) => acc + Number(s.precio || 0), 0);
+
   const duracionCitaExistente = (cita) => {
     const total = (cita.servicios || []).reduce((acc, s) => acc + Number(s.duracion_minutos || 0), 0);
     return total > 0 ? total : 30;
@@ -131,6 +133,17 @@ export default function PacienteLayout({ user, onLogout }) {
   const volver = () => {
     if (step === 2) setStep(1);
     else if (step === 1) { setStep(0); setCarritoServicios([]); }
+  };
+
+  const volverAEspecialidades = () => {
+    setShowCitas(false);
+    setReservaExito(false);
+    setStep(0);
+    setEspSeleccionada(null);
+    setProfSeleccionado(null);
+    setCarritoServicios([]);
+    setFechaSel(null);
+    setHoraSel(null);
   };
 
   // Calendario
@@ -244,8 +257,11 @@ export default function PacienteLayout({ user, onLogout }) {
           >
             Mis Citas ({misCitas.filter((c) => c.estado !== 'cancelada').length})
           </button>
-          <button onClick={onLogout} className="text-red-500 font-semibold text-sm hover:underline">
-            Salir
+          <button onClick={volverAEspecialidades} className="text-red-500 font-semibold text-sm hover:underline">
+            Volver
+          </button>
+          <button onClick={onLogout} className="text-gray-600 font-semibold text-sm hover:underline">
+            Cerrar sesión
           </button>
         </div>
       </div>
@@ -253,7 +269,15 @@ export default function PacienteLayout({ user, onLogout }) {
       {/* Mis Citas */}
       {showCitas && (
         <div className="w-full max-w-2xl bg-white rounded-xl shadow p-6 mb-4 border border-gray-100">
-          <h2 className="font-bold text-xl mb-4">Mis Citas</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-xl">Mis Citas</h2>
+            <button
+              onClick={() => setShowCitas(false)}
+              className="text-sm font-semibold text-gray-600 hover:underline"
+            >
+              Volver atrás
+            </button>
+          </div>
           {misCitas.filter((c) => c.estado !== 'cancelada').length === 0 ? (
             <p className="text-gray-400">No tienes citas</p>
           ) : (
@@ -264,6 +288,10 @@ export default function PacienteLayout({ user, onLogout }) {
                     <div className="font-semibold">{c.fecha} · {c.hora?.slice(0, 5)}</div>
                     <div className="text-sm text-gray-500">{c.profesional?.nombre} · {c.profesional?.especialidad?.nombre}</div>
                     <div className="text-xs text-gray-400">{c.servicios?.map((s) => s.nombre).join(', ')}</div>
+                    <div className="text-xs font-semibold text-emerald-700 mt-1 inline-flex items-center gap-1">
+                      <span aria-hidden="true">💶</span>
+                      <span>€{(c.servicios || []).reduce((acc, s) => acc + Number(s.precio || 0), 0).toFixed(2)}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
@@ -485,6 +513,10 @@ export default function PacienteLayout({ user, onLogout }) {
                   <p className="text-gray-400 text-center mt-8">Selecciona un día</p>
                 )}
               </div>
+            </div>
+            <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-blue-900">Coste estimado de la cita</span>
+              <span className="text-lg font-bold text-blue-700">€{totalReservaEuros.toFixed(2)}</span>
             </div>
           </>
         )}

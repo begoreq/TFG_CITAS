@@ -77,7 +77,7 @@ export default function ModalNuevaCita({ fecha, especialidad, onClose, onCrear }
           </div>
           <div>
             <label className="block font-semibold mb-1">Teléfono *</label>
-            <input name="telefono" value={form.telefono} onChange={handleChange} required placeholder="+34 600 000 000" className="w-full border rounded px-3 py-2 bg-gray-50" />
+            <input name="telefono" type="tel" maxLength={15} pattern="[0-9+() -]{9,15}" value={form.telefono} onChange={handleChange} required placeholder="+34 600 000 000" className="w-full border rounded px-3 py-2 bg-gray-50" />
           </div>
           {especialidad && (
             <>

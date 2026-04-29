@@ -31,8 +31,17 @@ export default function ProfesionalLayout({ user, onLogout }) {
   const [notasMedicas, setNotasMedicas] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  const [busquedaPacientes, setBusquedaPacientes] = useState('');
   const [modalFicha, setModalFicha] = useState(null);
   const [fichaLoading, setFichaLoading] = useState(false);
+  const [modalEditarPaciente, setModalEditarPaciente] = useState(null);
+  const [guardandoPaciente, setGuardandoPaciente] = useState(false);
+  const [formPaciente, setFormPaciente] = useState({
+    name: '',
+    apellidos: '',
+    email: '',
+    telefono: '',
+  });
   const [mesVista, setMesVista] = useState(() => {
     const hoy = new Date();
     return { year: hoy.getFullYear(), month: hoy.getMonth() };
@@ -184,6 +193,42 @@ export default function ProfesionalLayout({ user, onLogout }) {
     }
   };
 
+  const abrirModalEditarPaciente = (paciente) => {
+    setModalEditarPaciente(paciente);
+    setFormPaciente({
+      name: paciente.name || '',
+      apellidos: paciente.apellidos || '',
+      email: paciente.email || '',
+      telefono: paciente.telefono || '',
+    });
+  };
+
+  const guardarEdicionPaciente = async () => {
+    if (!modalEditarPaciente) return;
+
+    if (!formPaciente.name.trim() || !formPaciente.email.trim()) {
+      alert('Nombre y email son obligatorios');
+      return;
+    }
+
+    setGuardandoPaciente(true);
+    try {
+      const res = await api.put(`/pacientes/${modalEditarPaciente.id}`, {
+        name: formPaciente.name.trim(),
+        apellidos: formPaciente.apellidos.trim() || null,
+        email: formPaciente.email.trim(),
+        telefono: formPaciente.telefono.trim() || null,
+      });
+
+      setPacientes((prev) => prev.map((p) => (p.id === modalEditarPaciente.id ? { ...p, ...res.data } : p)));
+      setModalEditarPaciente(null);
+    } catch {
+      alert('No se pudo actualizar el paciente');
+    } finally {
+      setGuardandoPaciente(false);
+    }
+  };
+
   const cambiarDia = (offset) => {
     const d = new Date(fechaSel);
     d.setDate(d.getDate() + offset);
@@ -235,10 +280,14 @@ export default function ProfesionalLayout({ user, onLogout }) {
     completada: 'bg-blue-100 text-blue-700 border-blue-300',
   };
 
-  const citasPlanificadasDia = citas.filter((c) => c.estado === 'confirmada' || c.estado === 'pendiente');
-  const pendientesDia = citasPlanificadasDia.filter((c) => c.estado === 'pendiente').length;
-  const confirmadasDia = citasPlanificadasDia.filter((c) => c.estado === 'confirmada').length;
-  const citasOrdenadasPorHora = [...citasPlanificadasDia].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+  const totalDia = citas.length;
+  const citasActivasDia = citas.filter((c) => c.estado === 'confirmada' || c.estado === 'pendiente');
+  const citasHistorialDia = citas.filter((c) => c.estado === 'completada' || c.estado === 'cancelada');
+  const pendientesDia = citasActivasDia.filter((c) => c.estado === 'pendiente').length;
+  const confirmadasDia = citasActivasDia.filter((c) => c.estado === 'confirmada').length;
+  const completadasDia = citas.filter((c) => c.estado === 'completada').length;
+  const canceladasDia = citas.filter((c) => c.estado === 'cancelada').length;
+  const citasOrdenadasPorHora = [...citas].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
 
   const hhmmToMinutes = (hhmm) => {
     const [h, m] = (hhmm || '00:00').slice(0, 5).split(':').map(Number);
@@ -269,9 +318,10 @@ export default function ProfesionalLayout({ user, onLogout }) {
     : '—';
 
   const ahoraHHMM = new Date().toTimeString().slice(0, 5);
+  const citasActivasOrdenadas = [...citasActivasDia].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
   const proximaCitaDia = (esHoy
-    ? citasOrdenadasPorHora.find((c) => (c.hora || '').slice(0, 5) >= ahoraHHMM)
-    : citasOrdenadasPorHora[0]) || null;
+    ? citasActivasOrdenadas.find((c) => (c.hora || '').slice(0, 5) >= ahoraHHMM)
+    : citasActivasOrdenadas[0]) || null;
 
   if (!profesionalId) {
     return (
@@ -288,6 +338,17 @@ export default function ProfesionalLayout({ user, onLogout }) {
     { id: 'agenda', label: 'Mi Agenda', icon: '📅' },
     { id: 'pacientes', label: 'Mis Pacientes', icon: '👥' },
   ];
+
+  const pacientesFiltrados = pacientes.filter((paciente) => {
+    const termino = busquedaPacientes.trim().toLowerCase();
+    if (!termino) return true;
+
+    const nombreCompleto = `${paciente.name || ''} ${paciente.apellidos || ''}`.toLowerCase();
+    const email = (paciente.email || '').toLowerCase();
+    const telefono = (paciente.telefono || '').toLowerCase();
+
+    return nombreCompleto.includes(termino) || email.includes(termino) || telefono.includes(termino);
+  });
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -430,25 +491,35 @@ export default function ProfesionalLayout({ user, onLogout }) {
                   </div>
                   <h1 className="text-3xl font-extrabold text-gray-800 capitalize leading-tight">{fechaFormateada}</h1>
                   {esHoy && <span className="text-sm text-green-600 font-semibold">Hoy</span>}
-                  <p className="text-sm text-gray-500 mt-2">Pacientes planificados para la fecha seleccionada.</p>
+                  <p className="text-sm text-gray-500 mt-2">Resumen de citas para la fecha seleccionada.</p>
 
                   <div className="grid grid-cols-2 gap-2 mt-4">
                     <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Planificadas</div>
-                      <div className="text-xl font-extrabold text-gray-800">{citasPlanificadasDia.length}</div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Totales</div>
+                      <div className="text-xl font-extrabold text-gray-800">{totalDia}</div>
                     </div>
                     <div className="rounded-xl border border-green-200 bg-green-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">Confirmadas</div>
-                      <div className="text-xl font-extrabold text-green-700">{confirmadasDia}</div>
+                      <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">Activas</div>
+                      <div className="text-xl font-extrabold text-green-700">{citasActivasDia.length}</div>
                     </div>
-                    <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-yellow-700 font-semibold">Pendientes</div>
-                      <div className="text-xl font-extrabold text-yellow-700">{pendientesDia}</div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="text-xs uppercase tracking-wide text-slate-700 font-semibold">Historial</div>
+                      <div className="text-xl font-extrabold text-slate-700">{citasHistorialDia.length}</div>
                     </div>
                     <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
                       <div className="text-xs uppercase tracking-wide text-blue-700 font-semibold">Franja</div>
                       <div className="text-sm font-bold text-blue-700">{franjaDia}</div>
                     </div>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                    Confirmadas: <span className="font-semibold text-green-700">{confirmadasDia}</span>
+                    {' · '}
+                    Pendientes: <span className="font-semibold text-yellow-700">{pendientesDia}</span>
+                    {' · '}
+                    Completadas: <span className="font-semibold text-blue-700">{completadasDia}</span>
+                    {' · '}
+                    Canceladas: <span className="font-semibold text-slate-700">{canceladasDia}</span>
                   </div>
 
                   <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3 text-sm">
@@ -539,11 +610,11 @@ export default function ProfesionalLayout({ user, onLogout }) {
                   <div className="flex flex-col items-end gap-2">
                     {cita.estado === 'confirmada' ? (
                       <button
-                        onClick={() => completarRapido(cita)}
-                        title="Click para marcar como completada"
+                        onClick={() => abrirModalCompletar(cita)}
+                        title="Abrir atención para añadir notas médicas y completar la cita"
                         className={`px-3 py-1 rounded-full text-xs font-bold border transition hover:brightness-95 ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}
                       >
-                        {cita.estado}
+                        Atender
                       </button>
                     ) : (
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}>
@@ -626,7 +697,21 @@ export default function ProfesionalLayout({ user, onLogout }) {
 
         {tab === 'pacientes' && (
           <div className="max-w-4xl">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Mis Pacientes</h2>
+            <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Mis Pacientes</h2>
+                <p className="text-sm text-gray-500 mt-1">Busca un paciente y accede a su historia clínica.</p>
+              </div>
+              <div className="w-full md:max-w-sm">
+                <input
+                  type="text"
+                  value={busquedaPacientes}
+                  onChange={(e) => setBusquedaPacientes(e.target.value)}
+                  placeholder="🔎 Buscar por nombre, email o teléfono..."
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
             {pacientesLoading ? (
               <div className="space-y-3">
                 {[...Array(4)].map((_, i) => (
@@ -644,6 +729,11 @@ export default function ProfesionalLayout({ user, onLogout }) {
                 <span className="text-5xl">👥</span>
                 <p className="text-gray-400 mt-4 text-lg">Aún no tienes pacientes</p>
               </div>
+            ) : pacientesFiltrados.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+                <span className="text-5xl">🔍</span>
+                <p className="text-gray-400 mt-4 text-lg">No se encontraron pacientes con esa búsqueda</p>
+              </div>
             ) : (
               <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
                 <table className="w-full text-sm">
@@ -654,10 +744,11 @@ export default function ProfesionalLayout({ user, onLogout }) {
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Teléfono</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Citas</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Última Cita</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-600">Historia Clínica</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pacientes.map((p) => (
+                    {pacientesFiltrados.map((p) => (
                       <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50 transition">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -673,6 +764,22 @@ export default function ProfesionalLayout({ user, onLogout }) {
                           <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">{p.totalCitas}</span>
                         </td>
                         <td className="px-4 py-3 text-gray-500">{p.ultimaCita || '—'}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => abrirFicha(p.id)}
+                              className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition"
+                            >
+                              📋 Ver ficha
+                            </button>
+                            <button
+                              onClick={() => abrirModalEditarPaciente(p)}
+                              className="inline-flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition"
+                            >
+                              ✏️ Editar
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -718,6 +825,80 @@ export default function ProfesionalLayout({ user, onLogout }) {
                 className="px-5 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
               >
                 {guardando ? 'Guardando...' : '🩺 Completar Atención'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalEditarPaciente && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-xl mx-4">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-800">✏️ Editar Paciente</h2>
+              <button
+                onClick={() => setModalEditarPaciente(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >×</button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={formPaciente.name}
+                  onChange={(e) => setFormPaciente((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Apellidos</label>
+                <input
+                  type="text"
+                  value={formPaciente.apellidos}
+                  onChange={(e) => setFormPaciente((prev) => ({ ...prev, apellidos: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formPaciente.email}
+                  onChange={(e) => setFormPaciente((prev) => ({ ...prev, email: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Telefono</label>
+                <input
+                  type="tel"
+                  maxLength={15}
+                  pattern="[0-9+() -]{9,15}"
+                  value={formPaciente.telefono}
+                  onChange={(e) => setFormPaciente((prev) => ({ ...prev, telefono: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setModalEditarPaciente(null)}
+                className="px-5 py-2 border border-gray-300 rounded-lg font-semibold text-gray-600 hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarEdicionPaciente}
+                disabled={guardandoPaciente}
+                className="px-5 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
+              >
+                {guardandoPaciente ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
           </div>

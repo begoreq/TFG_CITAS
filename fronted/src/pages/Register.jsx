@@ -4,11 +4,14 @@ import api from '../api';
 export default function Register({ onLogin, onGoToLogin }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [rgpd, setRgpd] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const telefonoValido = (value) => /^[0-9+()\- ]{9,15}$/.test(value.trim());
 
   const passwordValida = (value) => {
     const tieneLongitudValida = value.length >= 8 && value.length <= 12;
@@ -46,11 +49,17 @@ export default function Register({ onLogin, onGoToLogin }) {
       return;
     }
 
+    if (!telefonoValido(telefono)) {
+      setError('El teléfono debe tener entre 9 y 15 caracteres y no puede contener letras.');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await api.post('/register', {
         name,
         email,
+        telefono,
         password,
         password_confirmation: passwordConfirmation,
       });
@@ -128,6 +137,23 @@ export default function Register({ onLogin, onGoToLogin }) {
                 className="w-full p-3 rounded-lg border border-gray-200 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
+            </div>
+            <div>
+              <label htmlFor="reg-telefono" className="font-semibold text-gray-800 text-sm block mb-1">Teléfono</label>
+              <input
+                id="reg-telefono"
+                type="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="+34 600 000 000"
+                className="w-full p-3 rounded-lg border border-gray-200 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                maxLength={15}
+                pattern="[0-9+() -]{9,15}"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Entre 9 y 15 caracteres. Solo números y símbolos + ( ) - espacio.
+              </p>
             </div>
             <div>
               <label htmlFor="reg-password" className="font-semibold text-gray-800 text-sm block mb-1">Contraseña</label>

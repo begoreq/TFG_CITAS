@@ -1,32 +1,26 @@
-# Fronted
+# Frontend — MediCitas
 
-Este directorio contiene el código fuente del frontend de la aplicación MediCitas.
+Capa de presentación de MediCitas, desarrollada con React 19 + Vite + Tailwind CSS.
 
-## Estructura principal
+## Estructura
 
-- `src/` - Código fuente principal de React.
-- `public/` - Archivos públicos y estáticos.
-- `index.html` - Archivo HTML principal.
-- `package.json` - Dependencias y scripts del frontend.
-- `vite.config.js` - Configuración de Vite.
-- `tailwind.config.js` - Configuración de Tailwind CSS.
-- `postcss.config.cjs` - Configuración de PostCSS.
+```
+src/
+├── pages/          # Layouts por rol (AdminLayout, ProfesionalLayout, PacienteLayout)
+├── App.jsx         # Enrutamiento basado en roles
+├── api.js          # Cliente Axios con interceptor Bearer Token
+├── ModalNuevaCita.jsx
+└── ...componentes reutilizables
+```
 
-## Scripts principales
+## Scripts
 
-- `npm install` - Instala las dependencias.
-- `npm run dev` - Inicia el servidor de desarrollo.
-- `npm run build` - Genera la versión de producción.
+| Comando | Descripción |
+|---|---|
+| `npm install` | Instala dependencias |
+| `npm run dev` | Servidor de desarrollo en `http://localhost:5173` |
+| `npm run build` | Build de producción en `/dist` |
 
-## Tecnologías utilizadas
+## Tecnologías
 
-- React
-- Vite
-- Tailwind CSS
-- ESLint
-
-## Notas
-
-- Asegúrate de tener Node.js instalado.
-- Para desarrollo, ejecuta `npm run dev`.
-- Para producción, ejecuta `npm run build` y sirve la carpeta `dist/`.
+- React 19 · Vite · Tailwind CSS · Axios · Recharts

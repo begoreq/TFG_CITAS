@@ -42,6 +42,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
+            'telefono' => ['required', 'string', 'max:15', 'regex:/^[0-9+()\- ]{9,15}$/'],
             'password' => [
                 'required',
                 'string',
@@ -54,6 +55,9 @@ class AuthController extends Controller
                 'confirmed',
             ],
         ], [
+            'telefono.required' => 'El telefono es obligatorio.',
+            'telefono.max' => 'El telefono no puede superar 15 caracteres.',
+            'telefono.regex' => 'El telefono debe tener entre 9 y 15 caracteres validos y no puede contener letras.',
             'password.min' => 'La contrasena debe tener al menos 8 caracteres.',
             'password.max' => 'La contrasena no puede superar 12 caracteres.',
             'password.regex' => 'La contrasena debe incluir letras, numeros, simbolos y al menos una mayuscula.',
@@ -63,6 +67,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'telefono' => $request->telefono,
             'password' => Hash::make($request->password),
             'role' => 'paciente',
         ]);

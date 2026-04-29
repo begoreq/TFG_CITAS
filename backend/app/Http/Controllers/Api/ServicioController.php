@@ -18,8 +18,10 @@ class ServicioController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
-            'duracion_minutos' => 'required|integer|min:1',
+            'duracion_minutos' => 'required|integer|min:1|max:120',
             'especialidad_id' => 'required|exists:especialidades,id',
+        ], [
+            'duracion_minutos.max' => 'La duracion maxima permitida es de 120 minutos.',
         ]);
 
         $servicio = Servicio::create($request->only('nombre', 'descripcion', 'precio', 'duracion_minutos', 'especialidad_id'));
@@ -37,8 +39,10 @@ class ServicioController extends Controller
         $request->validate([
             'nombre' => 'sometimes|string|max:255',
             'precio' => 'sometimes|numeric|min:0',
-            'duracion_minutos' => 'sometimes|integer|min:1',
+            'duracion_minutos' => 'sometimes|integer|min:1|max:120',
             'especialidad_id' => 'sometimes|exists:especialidades,id',
+        ], [
+            'duracion_minutos.max' => 'La duracion maxima permitida es de 120 minutos.',
         ]);
 
         $servicio->update($request->only('nombre', 'descripcion', 'precio', 'duracion_minutos', 'especialidad_id'));

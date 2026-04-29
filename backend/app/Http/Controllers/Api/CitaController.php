@@ -282,6 +282,28 @@ class CitaController extends Controller
                 ];
             });
 
+        // Para demos: si hay pocos pacientes reales con cita, completa la lista
+        // con pacientes registrados (sin historial) para que la vista sea util.
+        if ($pacientes->count() < 6) {
+            $faltan = 6 - $pacientes->count();
+            $extras = \App\Models\User::where('role', 'paciente')
+                ->whereNotIn('id', $pacienteIds)
+                ->orderBy('name')
+                ->limit($faltan)
+                ->get()
+                ->map(fn ($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'apellidos' => $p->apellidos,
+                    'email' => $p->email,
+                    'telefono' => $p->telefono,
+                    'totalCitas' => 0,
+                    'ultimaCita' => null,
+                ]);
+
+            $pacientes = $pacientes->concat($extras);
+        }
+
         return response()->json($pacientes);
     }
 
@@ -321,6 +343,41 @@ class CitaController extends Controller
                 'telefono'  => $paciente->telefono,
             ],
             'citas' => $citas,
+        ]);
+    }
+
+    public function updatePaciente(Request $request, $pacienteId)
+    {
+        $profesional = $request->user()->profesional;
+
+        if (!$profesional) {
+            return response()->json(['message' => 'Sin perfil profesional'], 403);
+        }
+
+        $paciente = \App\Models\User::findOrFail($pacienteId);
+
+        if ($paciente->role !== 'paciente') {
+            return response()->json(['message' => 'Solo se pueden editar pacientes'], 422);
+        }
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'apellidos' => 'nullable|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $paciente->id,
+            'telefono' => ['nullable', 'string', 'max:15', 'regex:/^[0-9+()\- ]{9,15}$/'],
+        ], [
+            'telefono.max' => 'El telefono no puede superar 15 caracteres.',
+            'telefono.regex' => 'El telefono debe tener entre 9 y 15 caracteres validos.',
+        ]);
+
+        $paciente->update($data);
+
+        return response()->json([
+            'id' => $paciente->id,
+            'name' => $paciente->name,
+            'apellidos' => $paciente->apellidos,
+            'email' => $paciente->email,
+            'telefono' => $paciente->telefono,
         ]);
     }
 }

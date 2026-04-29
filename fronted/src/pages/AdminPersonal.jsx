@@ -107,12 +107,14 @@ export default function AdminPersonal() {
           <h1 className="text-3xl font-bold">Personal</h1>
           <p className="text-gray-500">Gestión de profesionales de la clínica</p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-        >
-          + Nuevo Profesional
-        </button>
+        {!showForm && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+          >
+            + Nuevo Profesional
+          </button>
+        )}
       </div>
 
       {/* Formulario */}
@@ -137,7 +139,7 @@ export default function AdminPersonal() {
             )}
             <div>
               <label htmlFor="prof-telefono" className="block font-semibold mb-1 text-sm">Teléfono</label>
-              <input id="prof-telefono" name="telefono" value={form.telefono} onChange={handleChange} className="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="prof-telefono" name="telefono" type="tel" maxLength={15} pattern="[0-9+() -]{9,15}" value={form.telefono} onChange={handleChange} className="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label htmlFor="prof-especialidad" className="block font-semibold mb-1 text-sm">Especialidad *</label>
@@ -180,8 +182,22 @@ export default function AdminPersonal() {
               {p.user?.email && <div className="text-sm text-gray-600 mb-1">📧 {p.user.email}</div>}
               {p.telefono && <div className="text-sm text-gray-600 mb-3">📞 {p.telefono}</div>}
               <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                <button onClick={() => handleEditar(p)} className="text-blue-600 hover:text-blue-800 font-semibold text-sm">Editar</button>
-                <button onClick={() => handleEliminar(p.id)} className="text-red-600 hover:text-red-800 font-semibold text-sm">Eliminar</button>
+                <button
+                  onClick={() => handleEditar(p)}
+                  title="Editar"
+                  aria-label="Editar profesional"
+                  className="text-blue-600 hover:text-blue-800 font-semibold text-lg leading-none"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => handleEliminar(p.id)}
+                  title="Eliminar"
+                  aria-label="Eliminar profesional"
+                  className="text-red-600 hover:text-red-800 font-semibold text-lg leading-none"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           ))
