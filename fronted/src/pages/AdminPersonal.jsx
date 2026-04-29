@@ -42,7 +42,13 @@ export default function AdminPersonal() {
       resetForm();
       cargarDatos();
     } catch (err) {
-      alert(err.response?.data?.message || 'Error al guardar');
+      const data = err.response?.data;
+      if (data?.errors) {
+        const firstError = Object.values(data.errors)[0];
+        alert(Array.isArray(firstError) ? firstError[0] : firstError);
+      } else {
+        alert(data?.message || 'Error al guardar');
+      }
     }
   };
 
@@ -126,6 +132,7 @@ export default function AdminPersonal() {
               <div>
                 <label htmlFor="prof-email" className="block font-semibold mb-1 text-sm">Email *</label>
                 <input id="prof-email" name="email" type="email" value={form.email} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <p className="text-xs text-gray-500 mt-1">Será el correo de acceso del profesional. Debe ser único en el sistema.</p>
               </div>
             )}
             <div>

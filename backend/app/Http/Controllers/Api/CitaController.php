@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
+use App\Models\Servicio;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -58,14 +59,31 @@ class CitaController extends Controller
             return response()->json(['message' => 'No se pueden reservar citas en domingo'], 422);
         }
 
-        $existente = Cita::where('profesional_id', $request->profesional_id)
+        $inicioNueva = Carbon::createFromFormat('H:i', substr((string) $request->hora, 0, 5));
+        $duracionNueva = Servicio::whereIn('id', $request->servicios)->sum('duracion_minutos');
+        if ($duracionNueva <= 0) {
+            $duracionNueva = 30;
+        }
+        $finNueva = (clone $inicioNueva)->addMinutes($duracionNueva);
+
+        $existente = Cita::with('servicios')
+            ->where('profesional_id', $request->profesional_id)
             ->where('fecha', $request->fecha)
-            ->where('hora', $request->hora)
             ->whereNotIn('estado', ['cancelada'])
-            ->first();
+            ->get()
+            ->first(function ($citaExistente) use ($inicioNueva, $finNueva) {
+                $inicioExistente = Carbon::createFromFormat('H:i', substr((string) $citaExistente->hora, 0, 5));
+                $duracionExistente = $citaExistente->servicios->sum('duracion_minutos');
+                if ($duracionExistente <= 0) {
+                    $duracionExistente = 30;
+                }
+                $finExistente = (clone $inicioExistente)->addMinutes($duracionExistente);
+
+                return $inicioNueva->lt($finExistente) && $finNueva->gt($inicioExistente);
+            });
 
         if ($existente) {
-            return response()->json(['message' => 'Ya existe una cita en ese horario'], 422);
+            return response()->json(['message' => 'La cita se solapa con otra ya reservada'], 422);
         }
 
         $cita = Cita::create([

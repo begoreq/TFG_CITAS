@@ -42,7 +42,22 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:12',
+                'regex:/[A-Za-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[^A-Za-z0-9]/',
+                'confirmed',
+            ],
+        ], [
+            'password.min' => 'La contrasena debe tener al menos 8 caracteres.',
+            'password.max' => 'La contrasena no puede superar 12 caracteres.',
+            'password.regex' => 'La contrasena debe incluir letras, numeros, simbolos y al menos una mayuscula.',
+            'password.confirmed' => 'La confirmacion de la contrasena no coincide.',
         ]);
 
         $user = User::create([

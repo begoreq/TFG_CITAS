@@ -23,6 +23,13 @@ class ProfesionalController extends Controller
             'email' => 'required|email|unique:users',
             'telefono' => 'nullable|string|max:20',
             'especialidad_id' => 'required|exists:especialidades,id',
+        ], [
+            'nombre.required' => 'El nombre es obligatorio.',
+            'email.required' => 'El email es obligatorio.',
+            'email.email' => 'El formato del email no es valido.',
+            'email.unique' => 'Ese email ya esta en uso por otro usuario.',
+            'especialidad_id.required' => 'La especialidad es obligatoria.',
+            'especialidad_id.exists' => 'La especialidad seleccionada no existe.',
         ]);
 
         $user = User::create([

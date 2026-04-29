@@ -12,11 +12,41 @@ export default function PacienteLayout({ user, onLogout }) {
   const [fechaSel, setFechaSel] = useState(null);
   const [horaSel, setHoraSel] = useState(null);
   const [misCitas, setMisCitas] = useState([]);
+  const [citasActivasDia, setCitasActivasDia] = useState([]);
+  const [cargandoHoras, setCargandoHoras] = useState(false);
   const [showCitas, setShowCitas] = useState(false);
   const [reservaExito, setReservaExito] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [nowTick, setNowTick] = useState(Date.now());
 
   const HORAS = ['09:00', '10:00', '11:00', '12:00', '13:00', '16:00', '17:00', '18:00'];
+
+  const hhmmToMinutes = (hhmm) => {
+    const [h, m] = (hhmm || '00:00').slice(0, 5).split(':').map(Number);
+    return (h * 60) + m;
+  };
+
+  const duracionReservaMinutos = Math.max(
+    carritoServicios.reduce((acc, s) => acc + Number(s.duracion_minutos || 0), 0),
+    30,
+  );
+
+  const duracionCitaExistente = (cita) => {
+    const total = (cita.servicios || []).reduce((acc, s) => acc + Number(s.duracion_minutos || 0), 0);
+    return total > 0 ? total : 30;
+  };
+
+  const esHoraOcupada = (hora) => {
+    const inicioNueva = hhmmToMinutes(hora);
+    const finNueva = inicioNueva + duracionReservaMinutos;
+
+    return citasActivasDia.some((cita) => {
+      const inicioExistente = hhmmToMinutes((cita.hora || '').slice(0, 5));
+      const finExistente = inicioExistente + duracionCitaExistente(cita);
+
+      return inicioNueva < finExistente && finNueva > inicioExistente;
+    });
+  };
 
   useEffect(() => {
     api.get('/especialidades').then((res) => {
@@ -55,6 +85,17 @@ export default function PacienteLayout({ user, onLogout }) {
       alert('Selecciona profesional, servicios, fecha y hora');
       return;
     }
+
+    if (esHoraOcupada(horaSel)) {
+      alert('Esa hora ya no esta disponible. Elige otra franja.');
+      return;
+    }
+
+    if (esHoraPasada(horaSel)) {
+      alert('Esa hora ya ha pasado. Elige otra franja disponible.');
+      return;
+    }
+
     try {
       await api.post('/citas', {
         paciente_id: user.id,
@@ -112,6 +153,18 @@ export default function PacienteLayout({ user, onLogout }) {
 
   const esDomingo = (year, month, day) => new Date(year, month, day).getDay() === 0;
 
+  const hoyISO = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+
+  const esHoraPasada = (hora) => {
+    if (!fechaSel || fechaSel !== hoyISO) return false;
+
+    const [hh, mm] = hora.split(':').map(Number);
+    const slot = new Date();
+    slot.setHours(hh, mm, 0, 0);
+
+    return slot <= new Date(nowTick);
+  };
+
   const diaNoDisponible = (dia) => {
     const fecha = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
     const esPasado = new Date(mesVista.year, mesVista.month, dia) < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
@@ -133,6 +186,45 @@ export default function PacienteLayout({ user, onLogout }) {
       return { year: prev.year, month: m };
     });
   };
+
+  useEffect(() => {
+    const cargarHorasOcupadas = async () => {
+      if (!fechaSel || !profSeleccionado?.id || step !== 2) {
+        setCitasActivasDia([]);
+        return;
+      }
+
+      setCargandoHoras(true);
+      try {
+        const res = await api.get('/citas', {
+          params: {
+            fecha: fechaSel,
+            profesional_id: profSeleccionado.id,
+          },
+        });
+
+        const activas = (res.data || []).filter((cita) => cita.estado !== 'cancelada');
+        setCitasActivasDia(activas);
+      } catch {
+        setCitasActivasDia([]);
+      } finally {
+        setCargandoHoras(false);
+      }
+    };
+
+    cargarHorasOcupadas();
+  }, [fechaSel, profSeleccionado, step]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (horaSel && (esHoraOcupada(horaSel) || esHoraPasada(horaSel))) {
+      setHoraSel(null);
+    }
+  }, [citasActivasDia, horaSel, fechaSel, nowTick, duracionReservaMinutos]);
 
   const iconos = { 'Medicina Deportiva': '🏃‍♂️', 'Fisioterapia': '🦴', 'Odontología': '🦷', 'Psicología': '🧠' };
 
@@ -194,7 +286,7 @@ export default function PacienteLayout({ user, onLogout }) {
       )}
 
       {/* Panel principal */}
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow p-8 border border-emerald-200 relative min-h-[400px]">
+      <div className={`w-full max-w-2xl bg-white rounded-xl shadow p-8 border border-emerald-200 relative min-h-[400px] ${step > 0 && !showCitas ? 'pb-24' : ''}`}>
         {step > 0 && !showCitas && (
           <button onClick={volver} className="absolute left-6 bottom-6 bg-gray-200 text-gray-800 px-5 py-2 rounded-lg font-bold hover:bg-gray-300 transition">
             Volver
@@ -338,17 +430,45 @@ export default function PacienteLayout({ user, onLogout }) {
                     <div className="font-semibold text-lg mb-4 text-gray-700 capitalize">
                       {new Date(fechaSel + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </div>
+                    {cargandoHoras && (
+                      <p className="text-xs text-gray-400 mb-2">Comprobando disponibilidad...</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                      <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Disponible</span>
+                      <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500"></span> Ocupada</span>
+                      <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span> Pasada</span>
+                    </div>
                     <div className="flex flex-col gap-3">
                       {HORAS.map((h) => (
                         <div key={h} className="flex items-center gap-3">
+                          {(() => {
+                            const estaOcupada = esHoraOcupada(h);
+                            const horaPasada = esHoraPasada(h);
+                            const noDisponible = estaOcupada || horaPasada;
+                            return (
                           <button
-                            onClick={() => setHoraSel(h)}
+                            onClick={() => {
+                              if (!noDisponible) setHoraSel(h);
+                            }}
+                            disabled={noDisponible}
                             className={`flex-1 py-3 rounded-lg font-bold text-lg border-2 transition ${
-                              horaSel === h ? 'bg-blue-600 text-white border-blue-600' : 'border-blue-400 text-blue-600 hover:bg-blue-50'
+                              estaOcupada
+                                ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
+                                : horaPasada
+                                  ? 'bg-amber-50 text-amber-600 border-amber-200 cursor-not-allowed'
+                                : horaSel === h
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-blue-400 text-blue-600 hover:bg-blue-50'
                             }`}
                           >
-                            {h}
+                            <span className="inline-flex items-center gap-2">
+                              <span>{h}</span>
+                              {estaOcupada && <span aria-hidden="true">🔒</span>}
+                              {horaPasada && <span aria-hidden="true">⏳</span>}
+                            </span>
                           </button>
+                            );
+                          })()}
                           {horaSel === h && (
                             <button
                               onClick={confirmarReserva}

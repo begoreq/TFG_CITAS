@@ -33,6 +33,12 @@ export default function ProfesionalLayout({ user, onLogout }) {
   const [busqueda, setBusqueda] = useState('');
   const [modalFicha, setModalFicha] = useState(null);
   const [fichaLoading, setFichaLoading] = useState(false);
+  const [mesVista, setMesVista] = useState(() => {
+    const hoy = new Date();
+    return { year: hoy.getFullYear(), month: hoy.getMonth() };
+  });
+  const [citasMes, setCitasMes] = useState([]);
+  const [citasMesLoading, setCitasMesLoading] = useState(false);
 
   const profesionalId = user.profesional?.id;
 
@@ -75,6 +81,28 @@ export default function ProfesionalLayout({ user, onLogout }) {
     }
   };
 
+  const cargarCitasMes = async () => {
+    if (!profesionalId) return;
+
+    setCitasMesLoading(true);
+    try {
+      const inicioMes = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-01`;
+      const finMes = new Date(mesVista.year, mesVista.month + 1, 0).getDate();
+      const finMesIso = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-${String(finMes).padStart(2, '0')}`;
+
+      const res = await api.get('/citas', {
+        params: { profesional_id: profesionalId },
+      });
+
+      const citasFiltradas = (res.data || []).filter((cita) => cita.fecha >= inicioMes && cita.fecha <= finMesIso);
+      setCitasMes(citasFiltradas);
+    } catch {
+      setCitasMes([]);
+    } finally {
+      setCitasMesLoading(false);
+    }
+  };
+
   useEffect(() => {
     cargarCitas();
   }, [fechaSel, profesionalId]);
@@ -86,6 +114,22 @@ export default function ProfesionalLayout({ user, onLogout }) {
     }
   }, [profesionalId]);
 
+  useEffect(() => {
+    if (!profesionalId) return;
+
+    cargarCitasMes();
+  }, [mesVista, profesionalId]);
+
+  useEffect(() => {
+    if (!profesionalId) return;
+
+    const interval = setInterval(() => {
+      cargarKpis();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [profesionalId]);
+
   const cambiarEstado = async (cita, nuevoEstado) => {
     try {
       await api.put(`/citas/${cita.id}`, { estado: nuevoEstado });
@@ -94,6 +138,13 @@ export default function ProfesionalLayout({ user, onLogout }) {
     } catch {
       alert('Error al actualizar la cita');
     }
+  };
+
+  const completarRapido = async (cita) => {
+    const ok = window.confirm('Marcar esta cita como completada para contabilizar ingresos?');
+    if (!ok) return;
+
+    await cambiarEstado(cita, 'completada');
   };
 
   const abrirModalCompletar = (cita) => {
@@ -136,20 +187,91 @@ export default function ProfesionalLayout({ user, onLogout }) {
   const cambiarDia = (offset) => {
     const d = new Date(fechaSel);
     d.setDate(d.getDate() + offset);
-    setFechaSel(d.toISOString().split('T')[0]);
+    const nuevaFecha = d.toISOString().split('T')[0];
+    setFechaSel(nuevaFecha);
+    setMesVista({ year: d.getFullYear(), month: d.getMonth() });
+  };
+
+  const cambiarMes = (offset) => {
+    setMesVista((prev) => {
+      const nuevaFecha = new Date(prev.year, prev.month + offset, 1);
+      return { year: nuevaFecha.getFullYear(), month: nuevaFecha.getMonth() };
+    });
+  };
+
+  const seleccionarDiaCalendario = (dia) => {
+    const fechaIso = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    setFechaSel(fechaIso);
   };
 
   const esHoy = fechaSel === new Date().toISOString().split('T')[0];
+  const hoyIso = new Date().toISOString().split('T')[0];
 
   const fechaFormateada = new Date(fechaSel + 'T12:00:00').toLocaleDateString('es-ES', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
+
+  const nombreMesVista = new Date(mesVista.year, mesVista.month).toLocaleDateString('es-ES', {
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const diasMes = new Date(mesVista.year, mesVista.month + 1, 0).getDate();
+  const primerDiaMes = new Date(mesVista.year, mesVista.month, 1).getDay();
+  const offsetInicio = primerDiaMes === 0 ? 6 : primerDiaMes - 1;
+  const semanaCorta = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+
+  const citasPorDia = citasMes.reduce((acc, cita) => {
+    const dia = Number((cita.fecha || '').slice(8, 10));
+    if (!Number.isNaN(dia)) {
+      acc[dia] = (acc[dia] || 0) + 1;
+    }
+    return acc;
+  }, {});
 
   const estadoColor = {
     pendiente: 'bg-yellow-100 text-yellow-700 border-yellow-300',
     confirmada: 'bg-green-100 text-green-700 border-green-300',
     completada: 'bg-blue-100 text-blue-700 border-blue-300',
   };
+
+  const citasPlanificadasDia = citas.filter((c) => c.estado === 'confirmada' || c.estado === 'pendiente');
+  const pendientesDia = citasPlanificadasDia.filter((c) => c.estado === 'pendiente').length;
+  const confirmadasDia = citasPlanificadasDia.filter((c) => c.estado === 'confirmada').length;
+  const citasOrdenadasPorHora = [...citasPlanificadasDia].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+
+  const hhmmToMinutes = (hhmm) => {
+    const [h, m] = (hhmm || '00:00').slice(0, 5).split(':').map(Number);
+    return (h * 60) + m;
+  };
+
+  const minutesToHHMM = (totalMinutes) => {
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  const duracionCitaMinutos = (cita) => {
+    const total = (cita.servicios || []).reduce((acc, s) => acc + Number(s.duracion_minutos || 0), 0);
+    return total > 0 ? total : 30;
+  };
+
+  const franjaInicioMin = citasOrdenadasPorHora.length > 0
+    ? Math.min(...citasOrdenadasPorHora.map((c) => hhmmToMinutes(c.hora)))
+    : null;
+
+  const franjaFinMin = citasOrdenadasPorHora.length > 0
+    ? Math.max(...citasOrdenadasPorHora.map((c) => hhmmToMinutes(c.hora) + duracionCitaMinutos(c)))
+    : null;
+
+  const franjaDia = franjaInicioMin !== null && franjaFinMin !== null
+    ? `${minutesToHHMM(franjaInicioMin)} - ${minutesToHHMM(franjaFinMin)}`
+    : '—';
+
+  const ahoraHHMM = new Date().toTimeString().slice(0, 5);
+  const proximaCitaDia = (esHoy
+    ? citasOrdenadasPorHora.find((c) => (c.hora || '').slice(0, 5) >= ahoraHHMM)
+    : citasOrdenadasPorHora[0]) || null;
 
   if (!profesionalId) {
     return (
@@ -244,24 +366,115 @@ export default function ProfesionalLayout({ user, onLogout }) {
         </div>
 
         {tab === 'agenda' && (
-          <div className="max-w-3xl">
-            {/* Navegación de fecha */}
-            <div className="flex items-center justify-between mb-6">
-              <button onClick={() => cambiarDia(-1)} className="p-2 rounded-lg hover:bg-gray-200 text-gray-600 font-bold text-xl transition">‹</button>
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-gray-800 capitalize">{fechaFormateada}</h1>
-                {esHoy && <span className="text-sm text-green-600 font-medium">Hoy</span>}
-              </div>
-              <button onClick={() => cambiarDia(1)} className="p-2 rounded-lg hover:bg-gray-200 text-gray-600 font-bold text-xl transition">›</button>
-            </div>
+          <div className="max-w-6xl">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={() => cambiarMes(-1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 font-bold text-xl transition">‹</button>
+                  <h2 className="text-2xl font-bold text-gray-800 capitalize">{nombreMesVista}</h2>
+                  <button onClick={() => cambiarMes(1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 font-bold text-xl transition">›</button>
+                </div>
 
-            <div className="flex justify-center mb-6">
-              <input
-                type="date"
-                value={fechaSel}
-                onChange={(e) => setFechaSel(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+                <div className="grid grid-cols-7 gap-2 mb-2">
+                  {semanaCorta.map((d) => (
+                    <div key={d} className="text-center text-xs font-semibold uppercase tracking-wide text-gray-400">{d}</div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: offsetInicio }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-12" />
+                  ))}
+                  {Array.from({ length: diasMes }, (_, i) => i + 1).map((dia) => {
+                    const fechaDia = `${mesVista.year}-${String(mesVista.month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                    const seleccionado = fechaDia === fechaSel;
+                    const esHoyDia = fechaDia === hoyIso;
+                    const totalDia = citasPorDia[dia] || 0;
+
+                    return (
+                      <button
+                        key={dia}
+                        onClick={() => seleccionarDiaCalendario(dia)}
+                        className={`h-12 rounded-xl border text-sm font-semibold transition relative ${
+                          seleccionado
+                            ? 'bg-green-600 text-white border-green-600'
+                            : esHoyDia
+                              ? 'bg-green-50 text-green-700 border-green-200'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                        }`}
+                        title={totalDia > 0 ? `${totalDia} cita(s)` : 'Sin citas'}
+                      >
+                        {dia}
+                        {totalDia > 0 && (
+                          <span className={`absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                            seleccionado ? 'bg-white text-green-700' : 'bg-green-600 text-white'
+                          }`}>
+                            {totalDia}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 text-xs text-gray-500">
+                  {citasMesLoading ? 'Cargando citas del mes...' : 'Haz click en un dia para ver sus pacientes.'}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <button onClick={() => cambiarDia(-1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 font-bold text-xl transition">‹</button>
+                    <button onClick={() => cambiarDia(1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 font-bold text-xl transition">›</button>
+                  </div>
+                  <h1 className="text-3xl font-extrabold text-gray-800 capitalize leading-tight">{fechaFormateada}</h1>
+                  {esHoy && <span className="text-sm text-green-600 font-semibold">Hoy</span>}
+                  <p className="text-sm text-gray-500 mt-2">Pacientes planificados para la fecha seleccionada.</p>
+
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Planificadas</div>
+                      <div className="text-xl font-extrabold text-gray-800">{citasPlanificadasDia.length}</div>
+                    </div>
+                    <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+                      <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">Confirmadas</div>
+                      <div className="text-xl font-extrabold text-green-700">{confirmadasDia}</div>
+                    </div>
+                    <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                      <div className="text-xs uppercase tracking-wide text-yellow-700 font-semibold">Pendientes</div>
+                      <div className="text-xl font-extrabold text-yellow-700">{pendientesDia}</div>
+                    </div>
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                      <div className="text-xs uppercase tracking-wide text-blue-700 font-semibold">Franja</div>
+                      <div className="text-sm font-bold text-blue-700">{franjaDia}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3 text-sm">
+                    {proximaCitaDia ? (
+                      <p className="text-gray-700">
+                        <span className="font-semibold">Proxima cita:</span>{' '}
+                        {proximaCitaDia.hora?.slice(0, 5)} con {proximaCitaDia.paciente?.name} {proximaCitaDia.paciente?.apellidos || ''}
+                      </p>
+                    ) : (
+                      <p className="text-gray-500">No hay citas pendientes para esta fecha.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <input
+                    type="date"
+                    value={fechaSel}
+                    onChange={(e) => {
+                      setFechaSel(e.target.value);
+                      const d = new Date(`${e.target.value}T12:00:00`);
+                      setMesVista({ year: d.getFullYear(), month: d.getMonth() });
+                    }}
+                    className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Buscador de pacientes */}
@@ -324,9 +537,19 @@ export default function ProfesionalLayout({ user, onLogout }) {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}>
-                      {cita.estado}
-                    </span>
+                    {cita.estado === 'confirmada' ? (
+                      <button
+                        onClick={() => completarRapido(cita)}
+                        title="Click para marcar como completada"
+                        className={`px-3 py-1 rounded-full text-xs font-bold border transition hover:brightness-95 ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}
+                      >
+                        {cita.estado}
+                      </button>
+                    ) : (
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}>
+                        {cita.estado}
+                      </span>
+                    )}
                     {cita.estado === 'confirmada' && (
                       <div className="flex gap-2 mt-1">
                         <button

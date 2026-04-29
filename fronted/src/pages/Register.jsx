@@ -10,12 +10,34 @@ export default function Register({ onLogin, onGoToLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const passwordValida = (value) => {
+    const tieneLongitudValida = value.length >= 8 && value.length <= 12;
+    const tieneMayuscula = /[A-Z]/.test(value);
+    const tieneNumero = /[0-9]/.test(value);
+    const tieneSimbolo = /[^A-Za-z0-9]/.test(value);
+    const tieneLetra = /[A-Za-z]/.test(value);
+
+    return tieneLongitudValida && tieneMayuscula && tieneNumero && tieneSimbolo && tieneLetra;
+  };
+
+  const passwordChecks = {
+    longitud: password.length >= 8 && password.length <= 12,
+    mayuscula: /[A-Z]/.test(password),
+    numero: /[0-9]/.test(password),
+    simbolo: /[^A-Za-z0-9]/.test(password),
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (password !== passwordConfirmation) {
       setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    if (!passwordValida(password)) {
+      setError('La contraseña debe tener entre 8 y 12 caracteres, incluir mayúscula, número y símbolo.');
       return;
     }
 
@@ -114,11 +136,29 @@ export default function Register({ onLogin, onGoToLogin }) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="8-12 caracteres, mayúscula, número y símbolo"
                 className="w-full p-3 rounded-lg border border-gray-200 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                minLength={6}
+                minLength={8}
+                maxLength={12}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Usa de 8 a 12 caracteres e incluye al menos una mayúscula, un número y un símbolo.
+              </p>
+              <ul className="mt-2 space-y-1 text-xs">
+                <li className={passwordChecks.longitud ? 'text-green-600' : 'text-gray-500'}>
+                  {passwordChecks.longitud ? '✓' : '•'} Entre 8 y 12 caracteres
+                </li>
+                <li className={passwordChecks.mayuscula ? 'text-green-600' : 'text-gray-500'}>
+                  {passwordChecks.mayuscula ? '✓' : '•'} Al menos una letra mayúscula
+                </li>
+                <li className={passwordChecks.numero ? 'text-green-600' : 'text-gray-500'}>
+                  {passwordChecks.numero ? '✓' : '•'} Al menos un número
+                </li>
+                <li className={passwordChecks.simbolo ? 'text-green-600' : 'text-gray-500'}>
+                  {passwordChecks.simbolo ? '✓' : '•'} Al menos un símbolo
+                </li>
+              </ul>
             </div>
             <div>
               <label htmlFor="reg-password-confirm" className="font-semibold text-gray-800 text-sm block mb-1">Repetir Contraseña</label>
@@ -130,7 +170,8 @@ export default function Register({ onLogin, onGoToLogin }) {
                 placeholder="Repite tu contraseña"
                 className="w-full p-3 rounded-lg border border-gray-200 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                minLength={6}
+                minLength={8}
+                maxLength={12}
               />
             </div>
             <div className="flex items-start gap-2">
