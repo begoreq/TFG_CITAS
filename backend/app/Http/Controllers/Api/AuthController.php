@@ -55,6 +55,7 @@ class AuthController extends Controller
                 'confirmed',
             ],
         ], [
+            'email.unique' => 'Email ya existe.',
             'telefono.required' => 'El telefono es obligatorio.',
             'telefono.max' => 'El telefono no puede superar 15 caracteres.',
             'telefono.regex' => 'El telefono debe tener entre 9 y 15 caracteres validos y no puede contener letras.',

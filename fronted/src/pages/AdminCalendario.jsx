@@ -18,6 +18,41 @@ export default function AdminCalendario() {
   const hoy = new Date();
   const [mesVista, setMesVista] = useState({ year: hoy.getFullYear(), month: hoy.getMonth() });
 
+  const getBadgeEstado = (cita) => {
+    if (cita.no_asistio) {
+      return {
+        className: 'bg-rose-100 text-rose-700',
+        label: '🚫 No asistido',
+      };
+    }
+
+    if (cita.estado === 'confirmada') {
+      return {
+        className: 'bg-green-100 text-green-700',
+        label: '✅ Confirmada',
+      };
+    }
+
+    if (cita.estado === 'pendiente') {
+      return {
+        className: 'bg-yellow-100 text-yellow-700',
+        label: '⏳ Pendiente',
+      };
+    }
+
+    if (cita.estado === 'completada') {
+      return {
+        className: 'bg-blue-100 text-blue-700',
+        label: '🩺 Completada',
+      };
+    }
+
+    return {
+      className: 'bg-red-100 text-red-700',
+      label: '❌ Cancelada',
+    };
+  };
+
   const diasMes = new Date(mesVista.year, mesVista.month + 1, 0).getDate();
   const primerDia = new Date(mesVista.year, mesVista.month, 1).getDay();
 
@@ -305,6 +340,7 @@ export default function AdminCalendario() {
                 <div className="space-y-3 max-h-[calc(100vh-420px)] overflow-y-auto">
                   {citasDelDia.map((c) => {
                     const espColor = c.profesional?.especialidad?.color || '#6b7280';
+                    const badgeEstado = getBadgeEstado(c);
                     return (
                       <div key={c.id} className="rounded-lg border overflow-hidden" style={{ borderLeftWidth: '4px', borderLeftColor: espColor }}>
                         <div className="p-3">
@@ -312,13 +348,8 @@ export default function AdminCalendario() {
                             <span className="font-bold text-sm" style={{ color: espColor }}>
                               {c.hora?.slice(0, 5)}
                             </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                              c.estado === 'confirmada' ? 'bg-green-100 text-green-700' :
-                              c.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                              c.estado === 'completada' ? 'bg-blue-100 text-blue-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              {c.estado}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${badgeEstado.className}`}>
+                              {badgeEstado.label}
                             </span>
                           </div>
                           <div className="font-semibold text-gray-800 text-sm">{c.paciente?.name} {c.paciente?.apellidos || ''}</div>

@@ -19,9 +19,16 @@ const SkeletonCita = () => (
 );
 
 export default function ProfesionalLayout({ user, onLogout }) {
+  const getLocalIsoDate = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [tab, setTab] = useState('agenda');
   const [citas, setCitas] = useState([]);
-  const [fechaSel, setFechaSel] = useState(() => new Date().toISOString().split('T')[0]);
+  const [fechaSel, setFechaSel] = useState(() => getLocalIsoDate());
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState(null);
   const [kpisLoading, setKpisLoading] = useState(true);
@@ -156,6 +163,38 @@ export default function ProfesionalLayout({ user, onLogout }) {
     await cambiarEstado(cita, 'completada');
   };
 
+  const marcarNoAsistio = async (cita, valor) => {
+    const texto = valor ? 'Marcar esta cita como no asistida?' : 'Quitar marca de no asistida?';
+    const ok = window.confirm(texto);
+    if (!ok) return;
+
+    try {
+      await api.put(`/citas/${cita.id}`, { no_asistio: valor });
+      cargarCitas();
+      cargarKpis();
+    } catch {
+      alert('No se pudo actualizar el estado de asistencia');
+    }
+  };
+
+  const ejecutarAccionCita = async (cita, accion) => {
+    if (!accion) return;
+
+    if (accion === 'atender') {
+      abrirModalCompletar(cita);
+      return;
+    }
+
+    if (accion === 'cancelar') {
+      await cambiarEstado(cita, 'cancelada');
+      return;
+    }
+
+    if (accion === 'no_asistio') {
+      await marcarNoAsistio(cita, true);
+    }
+  };
+
   const abrirModalCompletar = (cita) => {
     setModalCita(cita);
     setNotasMedicas(cita.notas_medicas || '');
@@ -173,8 +212,9 @@ export default function ProfesionalLayout({ user, onLogout }) {
       setNotasMedicas('');
       cargarCitas();
       cargarKpis();
-    } catch {
-      alert('Error al completar la cita');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Error al completar la cita';
+      alert(msg);
     } finally {
       setGuardando(false);
     }
@@ -240,7 +280,7 @@ export default function ProfesionalLayout({ user, onLogout }) {
   const cambiarDia = (offset) => {
     const d = new Date(fechaSel);
     d.setDate(d.getDate() + offset);
-    const nuevaFecha = d.toISOString().split('T')[0];
+    const nuevaFecha = getLocalIsoDate(d);
     setFechaSel(nuevaFecha);
     setMesVista({ year: d.getFullYear(), month: d.getMonth() });
   };
@@ -257,8 +297,8 @@ export default function ProfesionalLayout({ user, onLogout }) {
     setFechaSel(fechaIso);
   };
 
-  const esHoy = fechaSel === new Date().toISOString().split('T')[0];
-  const hoyIso = new Date().toISOString().split('T')[0];
+  const hoyIso = getLocalIsoDate();
+  const esHoy = fechaSel === hoyIso;
 
   const fechaFormateada = new Date(fechaSel + 'T12:00:00').toLocaleDateString('es-ES', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -288,13 +328,10 @@ export default function ProfesionalLayout({ user, onLogout }) {
     completada: 'bg-blue-100 text-blue-700 border-blue-300',
   };
 
-  const totalDia = citas.length;
+  const totalDia = citas.filter((c) => c.estado !== 'cancelada').length;
   const citasActivasDia = citas.filter((c) => c.estado === 'confirmada' || c.estado === 'pendiente');
   const citasHistorialDia = citas.filter((c) => c.estado === 'completada' || c.estado === 'cancelada');
-  const pendientesDia = citasActivasDia.filter((c) => c.estado === 'pendiente').length;
-  const confirmadasDia = citasActivasDia.filter((c) => c.estado === 'confirmada').length;
   const completadasDia = citas.filter((c) => c.estado === 'completada').length;
-  const canceladasDia = citas.filter((c) => c.estado === 'cancelada').length;
   const citasOrdenadasPorHora = [...citas].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
 
   const hhmmToMinutes = (hhmm) => {
@@ -326,10 +363,21 @@ export default function ProfesionalLayout({ user, onLogout }) {
     : '—';
 
   const ahoraHHMM = new Date().toTimeString().slice(0, 5);
+  const esNoAsistida = (cita) => (
+    cita.no_asistio === true || (
+      esHoy
+      && (cita.estado === 'confirmada' || cita.estado === 'pendiente')
+      && (cita.hora || '').slice(0, 5) < ahoraHHMM
+    )
+  );
+
+  const citasNoAsistidasDia = citasActivasDia.filter(esNoAsistida);
+  const citasPorAtenderDia = citasActivasDia.filter((cita) => !esNoAsistida(cita));
+
   const citasActivasOrdenadas = [...citasActivasDia].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
   const proximaCitaDia = (esHoy
-    ? citasActivasOrdenadas.find((c) => (c.hora || '').slice(0, 5) >= ahoraHHMM)
-    : citasActivasOrdenadas[0]) || null;
+    ? citasActivasOrdenadas.find((c) => !esNoAsistida(c) && (c.hora || '').slice(0, 5) >= ahoraHHMM)
+    : citasPorAtenderDia.sort((a, b) => (a.hora || '').localeCompare(b.hora || ''))[0]) || null;
 
   if (!profesionalId) {
     return (
@@ -503,31 +551,27 @@ export default function ProfesionalLayout({ user, onLogout }) {
 
                   <div className="grid grid-cols-2 gap-2 mt-4">
                     <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Totales</div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Total del dia</div>
                       <div className="text-xl font-extrabold text-gray-800">{totalDia}</div>
                     </div>
                     <div className="rounded-xl border border-green-200 bg-green-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">Activas</div>
-                      <div className="text-xl font-extrabold text-green-700">{citasActivasDia.length}</div>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-slate-700 font-semibold">Historial</div>
-                      <div className="text-xl font-extrabold text-slate-700">{citasHistorialDia.length}</div>
+                      <div className="text-xs uppercase tracking-wide text-green-700 font-semibold">Por atender</div>
+                      <div className="text-xl font-extrabold text-green-700">{citasPorAtenderDia.length}</div>
                     </div>
                     <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-                      <div className="text-xs uppercase tracking-wide text-blue-700 font-semibold">Franja</div>
-                      <div className="text-sm font-bold text-blue-700">{franjaDia}</div>
+                      <div className="text-xs uppercase tracking-wide text-blue-700 font-semibold">Atendidas</div>
+                      <div className="text-xl font-extrabold text-blue-700">{completadasDia}</div>
+                    </div>
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3">
+                      <div className="text-xs uppercase tracking-wide text-rose-700 font-semibold">No asistio</div>
+                      <div className="text-xl font-extrabold text-rose-700">{citasNoAsistidasDia.length}</div>
                     </div>
                   </div>
 
                   <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-                    Confirmadas: <span className="font-semibold text-green-700">{confirmadasDia}</span>
+                    <span className="font-semibold">Franja:</span> {franjaDia}
                     {' · '}
-                    Pendientes: <span className="font-semibold text-yellow-700">{pendientesDia}</span>
-                    {' · '}
-                    Completadas: <span className="font-semibold text-blue-700">{completadasDia}</span>
-                    {' · '}
-                    Canceladas: <span className="font-semibold text-slate-700">{canceladasDia}</span>
+                    <span className="font-semibold">Historial:</span> {citasHistorialDia.length}
                   </div>
 
                   <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3 text-sm">
@@ -574,11 +618,12 @@ export default function ProfesionalLayout({ user, onLogout }) {
                 const nombre = `${c.paciente?.name || ''} ${c.paciente?.apellidos || ''}`.toLowerCase();
                 return nombre.includes(busqueda.toLowerCase());
               });
-              const siguientes = filtrar(citas.filter((c) => c.estado === 'confirmada' || c.estado === 'pendiente'));
+              const siguientes = filtrar(citas.filter((c) => (c.estado === 'confirmada' || c.estado === 'pendiente') && !esNoAsistida(c)));
+              const noAsistio = filtrar(citas.filter((c) => esNoAsistida(c)));
               const historial  = filtrar(citas.filter((c) => c.estado === 'completada' || c.estado === 'cancelada'));
-              const hayResultados = siguientes.length + historial.length > 0;
+              const hayResultados = siguientes.length + noAsistio.length + historial.length > 0;
 
-              const renderCard = (cita, opaco = false) => (
+              const renderCard = (cita, opaco = false, forzarNoAsistio = false) => (
                 <div key={cita.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start justify-between hover:shadow-md transition ${opaco ? 'opacity-50' : ''}`}>
                   <div className="flex gap-4">
                     <div className={`rounded-lg px-4 py-2 text-center min-w-[80px] ${opaco ? 'bg-gray-100' : 'bg-green-50'}`}>
@@ -616,28 +661,42 @@ export default function ProfesionalLayout({ user, onLogout }) {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    {cita.estado === 'confirmada' ? (
-                      <button
-                        onClick={() => abrirModalCompletar(cita)}
-                        title="Abrir atención para añadir notas médicas y completar la cita"
-                        className={`px-3 py-1 rounded-full text-xs font-bold border transition hover:brightness-95 ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}
-                      >
-                        Atender
-                      </button>
-                    ) : (
+                    {forzarNoAsistio ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border bg-rose-100 text-rose-700 border-rose-300">
+                        🚫 No asistio
+                      </span>
+                    ) : cita.estado !== 'confirmada' ? (
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${estadoColor[cita.estado] || 'bg-gray-100 text-gray-600'}`}>
                         {cita.estado}
                       </span>
-                    )}
-                    {cita.estado === 'confirmada' && (
-                      <div className="flex gap-2 mt-1">
-                        <button
-                          onClick={() => cambiarEstado(cita, 'cancelada')}
-                          className="text-xs bg-red-50 text-red-500 border border-red-200 px-3 py-1 rounded-lg font-semibold hover:bg-red-100 transition"
-                        >
-                          ✕ Cancelar
-                        </button>
-                      </div>
+                    ) : null}
+
+                    {!forzarNoAsistio && (cita.estado === 'confirmada' || cita.estado === 'pendiente') && (
+                      <details className="relative">
+                        <summary className="list-none cursor-pointer text-xs border border-gray-300 rounded-full px-3 py-1.5 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition select-none">
+                          ⚙️ Acciones ▾
+                        </summary>
+                        <div className="absolute right-0 mt-2 w-44 rounded-xl border border-gray-200 bg-white shadow-lg p-1 z-20">
+                          <button
+                            onClick={() => ejecutarAccionCita(cita, 'atender')}
+                            className="w-full text-left text-xs px-3 py-2 rounded-lg hover:bg-green-50 text-gray-700 font-medium"
+                          >
+                            🩺 Atender
+                          </button>
+                          <button
+                            onClick={() => ejecutarAccionCita(cita, 'cancelar')}
+                            className="w-full text-left text-xs px-3 py-2 rounded-lg hover:bg-red-50 text-gray-700 font-medium"
+                          >
+                            ❌ Cancelar
+                          </button>
+                          <button
+                            onClick={() => ejecutarAccionCita(cita, 'no_asistio')}
+                            className="w-full text-left text-xs px-3 py-2 rounded-lg hover:bg-rose-50 text-gray-700 font-medium"
+                          >
+                            🚫 No asistio
+                          </button>
+                        </div>
+                      </details>
                     )}
                   </div>
                 </div>
@@ -670,6 +729,15 @@ export default function ProfesionalLayout({ user, onLogout }) {
                     </>
                   )}
 
+                  {noAsistio.length > 0 && (
+                    <>
+                      <h3 className="text-lg font-bold text-rose-700 mb-3 flex items-center gap-2">⏰ No asistio</h3>
+                      <div className="space-y-4 mb-8">
+                        {noAsistio.map((cita) => renderCard(cita, true, true))}
+                      </div>
+                    </>
+                  )}
+
                   {/* Sección: Historial */}
                   {historial.length > 0 && (
                     <>
@@ -687,16 +755,16 @@ export default function ProfesionalLayout({ user, onLogout }) {
             {!loading && citas.length > 0 && (
               <div className="mt-6 bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex justify-around text-center">
                 <div>
-                  <div className="text-2xl font-bold text-gray-800">{citas.length}</div>
-                  <div className="text-xs text-gray-500">Citas del día</div>
+                  <div className="text-2xl font-bold text-gray-800">{totalDia}</div>
+                  <div className="text-xs text-gray-500">Total</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-green-600">{citas.filter((c) => c.estado === 'confirmada').length}</div>
-                  <div className="text-xs text-gray-500">Confirmadas</div>
+                  <div className="text-2xl font-bold text-green-600">{citasPorAtenderDia.length}</div>
+                  <div className="text-xs text-gray-500">Por atender</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">{citas.filter((c) => c.estado === 'completada').length}</div>
-                  <div className="text-xs text-gray-500">Completadas</div>
+                  <div className="text-2xl font-bold text-rose-600">{citasNoAsistidasDia.length}</div>
+                  <div className="text-xs text-gray-500">No asistio</div>
                 </div>
               </div>
             )}

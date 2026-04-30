@@ -8,6 +8,7 @@ import ProfesionalLayout from './pages/ProfesionalLayout';
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('login');
+  const [forzarLogin, setForzarLogin] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -17,21 +18,34 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      setPage('login');
+    }
+  }, [user]);
+
   const handleLogin = (userData) => {
+    setForzarLogin(false);
     setUser(userData);
+    setPage('login');
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setForzarLogin(true);
+    setPage('login');
     setUser(null);
+
+    // Extra guard to ensure auth view always returns to login after logout.
+    setTimeout(() => setPage('login'), 0);
   };
 
   if (!user) {
-    if (page === 'register') {
+    if (!forzarLogin && page === 'register') {
       return <Register onLogin={handleLogin} onGoToLogin={() => setPage('login')} />;
     }
-    return <Login onLogin={handleLogin} onGoToRegister={() => setPage('register')} />;
+    return <Login onLogin={handleLogin} onGoToRegister={() => { setForzarLogin(false); setPage('register'); }} />;
   }
 
   if (user.role === 'admin') {

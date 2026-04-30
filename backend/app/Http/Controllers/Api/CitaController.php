@@ -7,10 +7,44 @@ use App\Models\Cita;
 use App\Models\Servicio;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class CitaController extends Controller
 {
+    private function soportaNoAsistio(): bool
+    {
+        return Schema::hasColumn('citas', 'no_asistio');
+    }
+
+    private function haySolapeHorario(int $profesionalId, string $fecha, string $horaInicio, int $duracionMinutos, ?int $ignorarCitaId = null): bool
+    {
+        $inicioNueva = Carbon::createFromFormat('H:i', substr($horaInicio, 0, 5));
+        $finNueva = (clone $inicioNueva)->addMinutes(max($duracionMinutos, 30));
+
+        $query = Cita::with('servicios')
+            ->where('profesional_id', $profesionalId)
+            ->where('fecha', $fecha)
+            ->whereNotIn('estado', ['cancelada']);
+
+        if ($ignorarCitaId) {
+            $query->where('id', '!=', $ignorarCitaId);
+        }
+
+        $existente = $query->get()->first(function ($citaExistente) use ($inicioNueva, $finNueva) {
+            $inicioExistente = Carbon::createFromFormat('H:i', substr((string) $citaExistente->hora, 0, 5));
+            $duracionExistente = (int) $citaExistente->servicios->sum('duracion_minutos');
+            if ($duracionExistente <= 0) {
+                $duracionExistente = 30;
+            }
+            $finExistente = (clone $inicioExistente)->addMinutes($duracionExistente);
+
+            return $inicioNueva->lt($finExistente) && $finNueva->gt($inicioExistente);
+        });
+
+        return (bool) $existente;
+    }
+
     // Festivos nacionales España (se puede ampliar)
     private function esFestivo(string $fecha): bool
     {
@@ -60,30 +94,12 @@ class CitaController extends Controller
             return response()->json(['message' => 'No se pueden reservar citas en domingo'], 422);
         }
 
-        $inicioNueva = Carbon::createFromFormat('H:i', substr((string) $request->hora, 0, 5));
-        $duracionNueva = Servicio::whereIn('id', $request->servicios)->sum('duracion_minutos');
+        $duracionNueva = (int) Servicio::whereIn('id', $request->servicios)->sum('duracion_minutos');
         if ($duracionNueva <= 0) {
             $duracionNueva = 30;
         }
-        $finNueva = (clone $inicioNueva)->addMinutes($duracionNueva);
 
-        $existente = Cita::with('servicios')
-            ->where('profesional_id', $request->profesional_id)
-            ->where('fecha', $request->fecha)
-            ->whereNotIn('estado', ['cancelada'])
-            ->get()
-            ->first(function ($citaExistente) use ($inicioNueva, $finNueva) {
-                $inicioExistente = Carbon::createFromFormat('H:i', substr((string) $citaExistente->hora, 0, 5));
-                $duracionExistente = $citaExistente->servicios->sum('duracion_minutos');
-                if ($duracionExistente <= 0) {
-                    $duracionExistente = 30;
-                }
-                $finExistente = (clone $inicioExistente)->addMinutes($duracionExistente);
-
-                return $inicioNueva->lt($finExistente) && $finNueva->gt($inicioExistente);
-            });
-
-        if ($existente) {
+        if ($this->haySolapeHorario((int) $request->profesional_id, (string) $request->fecha, (string) $request->hora, $duracionNueva)) {
             return response()->json(['message' => 'La cita se solapa con otra ya reservada'], 422);
         }
 
@@ -108,7 +124,7 @@ class CitaController extends Controller
 
     public function update(Request $request, Cita $cita)
     {
-        $request->validate([
+        $rules = [
             'estado' => 'sometimes|in:pendiente,confirmada,cancelada,completada',
             'fecha' => 'sometimes|date',
             'hora' => 'sometimes',
@@ -122,9 +138,27 @@ class CitaController extends Controller
                 Rule::unique('users', 'email')->ignore($cita->paciente_id),
             ],
             'paciente_telefono' => ['sometimes', 'nullable', 'string', 'max:15', 'regex:/^[0-9+()\- ]{9,15}$/'],
-        ]);
+        ];
 
-        $cita->update($request->only('fecha', 'hora', 'estado', 'notas', 'notas_medicas'));
+        if ($this->soportaNoAsistio()) {
+            $rules['no_asistio'] = 'sometimes|boolean';
+        }
+
+        $request->validate($rules);
+
+        $data = $request->only('fecha', 'hora', 'estado', 'notas', 'notas_medicas');
+
+        if ($this->soportaNoAsistio()) {
+            if ($request->has('no_asistio')) {
+                $data['no_asistio'] = (bool) $request->no_asistio;
+            }
+
+            if ($request->filled('estado') && in_array($request->estado, ['completada', 'cancelada'], true)) {
+                $data['no_asistio'] = false;
+            }
+        }
+
+        $cita->update($data);
 
         if ($request->has('servicios')) {
             $cita->servicios()->sync($request->servicios);
@@ -240,6 +274,7 @@ class CitaController extends Controller
         $citasPendientes = Cita::where('profesional_id', $profesional->id)
             ->where('estado', 'confirmada')
             ->where('fecha', $hoy)
+            ->when($this->soportaNoAsistio(), fn ($q) => $q->where('no_asistio', false))
             ->count();
 
         $ingresosMes = Cita::where('profesional_id', $profesional->id)

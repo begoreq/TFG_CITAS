@@ -7,6 +7,7 @@ use App\Models\Especialidad;
 use App\Models\Profesional;
 use App\Models\Servicio;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -109,6 +110,48 @@ class AdminAndValidationFlowsTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['duracion_minutos']);
+    }
+
+    public function test_profesional_list_marks_overdue_confirmed_appointment_as_no_show(): void
+    {
+        Carbon::setTestNow('2026-04-30 12:30:00');
+
+        $especialidad = $this->crearEspecialidad();
+
+        $userProfesional = User::factory()->create(['role' => 'profesional']);
+        $profesional = Profesional::create([
+            'user_id' => $userProfesional->id,
+            'especialidad_id' => $especialidad->id,
+            'nombre' => 'Dr. No Show',
+            'apellidos' => 'Test',
+            'telefono' => '611000111',
+        ]);
+
+        $paciente = User::factory()->create(['role' => 'paciente']);
+
+        $cita = Cita::create([
+            'paciente_id' => $paciente->id,
+            'profesional_id' => $profesional->id,
+            'fecha' => now()->toDateString(),
+            'hora' => '10:00',
+            'estado' => 'confirmada',
+            'no_asistio' => false,
+        ]);
+
+        Sanctum::actingAs($userProfesional);
+
+        $response = $this->getJson('/api/citas?profesional_id=' . $profesional->id . '&fecha=' . now()->toDateString());
+
+        $response->assertOk()
+            ->assertJsonPath('0.id', $cita->id)
+            ->assertJsonPath('0.no_asistio', true);
+
+        $this->assertDatabaseHas('citas', [
+            'id' => $cita->id,
+            'no_asistio' => true,
+        ]);
+
+        Carbon::setTestNow();
     }
 
     private function crearEspecialidad(): Especialidad

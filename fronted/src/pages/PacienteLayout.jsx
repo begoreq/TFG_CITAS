@@ -18,6 +18,7 @@ export default function PacienteLayout({ user, onLogout }) {
   const [reservaExito, setReservaExito] = useState(false);
   const [loading, setLoading] = useState(true);
   const [nowTick, setNowTick] = useState(Date.now());
+  const [confirmandoReserva, setConfirmandoReserva] = useState(false);
 
   const HORAS = ['09:00', '10:00', '11:00', '12:00', '13:00', '16:00', '17:00', '18:00'];
 
@@ -38,17 +39,19 @@ export default function PacienteLayout({ user, onLogout }) {
     return total > 0 ? total : 30;
   };
 
-  const esHoraOcupada = (hora) => {
+  const esHoraOcupadaConCitas = (hora, citasDelDia) => {
     const inicioNueva = hhmmToMinutes(hora);
     const finNueva = inicioNueva + duracionReservaMinutos;
 
-    return citasActivasDia.some((cita) => {
+    return (citasDelDia || []).some((cita) => {
       const inicioExistente = hhmmToMinutes((cita.hora || '').slice(0, 5));
       const finExistente = inicioExistente + duracionCitaExistente(cita);
 
       return inicioNueva < finExistente && finNueva > inicioExistente;
     });
   };
+
+  const esHoraOcupada = (hora) => esHoraOcupadaConCitas(hora, citasActivasDia);
 
   useEffect(() => {
     api.get('/especialidades').then((res) => {
@@ -83,6 +86,8 @@ export default function PacienteLayout({ user, onLogout }) {
   };
 
   const confirmarReserva = async () => {
+    if (confirmandoReserva) return;
+
     if (!profSeleccionado || !fechaSel || !horaSel || carritoServicios.length === 0) {
       alert('Selecciona profesional, servicios, fecha y hora');
       return;
@@ -98,7 +103,24 @@ export default function PacienteLayout({ user, onLogout }) {
       return;
     }
 
+    setConfirmandoReserva(true);
     try {
+      // Revalida justo antes de guardar para evitar solapes por cambios recientes.
+      const resActual = await api.get('/citas', {
+        params: {
+          fecha: fechaSel,
+          profesional_id: profSeleccionado.id,
+        },
+      });
+
+      const activasActuales = (resActual.data || []).filter((cita) => cita.estado !== 'cancelada');
+      if (esHoraOcupadaConCitas(horaSel, activasActuales)) {
+        setCitasActivasDia(activasActuales);
+        setHoraSel(null);
+        alert('Esa hora ya no esta disponible para la duracion seleccionada. Elige otra franja.');
+        return;
+      }
+
       await api.post('/citas', {
         paciente_id: user.id,
         profesional_id: profSeleccionado.id,
@@ -117,6 +139,8 @@ export default function PacienteLayout({ user, onLogout }) {
       }, 2500);
     } catch (err) {
       alert(err.response?.data?.message || 'Error al reservar');
+    } finally {
+      setConfirmandoReserva(false);
     }
   };
 
@@ -458,6 +482,10 @@ export default function PacienteLayout({ user, onLogout }) {
                     <div className="font-semibold text-lg mb-4 text-gray-700 capitalize">
                       {new Date(fechaSel + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </div>
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800">
+                      <span aria-hidden="true">⏱️</span>
+                      <span>Duracion total seleccionada: {duracionReservaMinutos} min</span>
+                    </div>
                     {cargandoHoras && (
                       <p className="text-xs text-gray-400 mb-2">Comprobando disponibilidad...</p>
                     )}
@@ -500,9 +528,10 @@ export default function PacienteLayout({ user, onLogout }) {
                           {horaSel === h && (
                             <button
                               onClick={confirmarReserva}
+                              disabled={confirmandoReserva}
                               className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition"
                             >
-                              Confirmar ➤
+                              {confirmandoReserva ? 'Guardando...' : 'Confirmar ➤'}
                             </button>
                           )}
                         </div>
