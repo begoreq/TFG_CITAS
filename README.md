@@ -77,6 +77,15 @@ Esto ejecuta todas las migraciones y carga los datos iniciales:
 | **Aplicación web** | http://localhost:5173 |
 | **API REST** | http://localhost:8000/api |
 
+### 6. Demo rápida (5 minutos)
+
+1. Inicia sesión como admin y verifica dashboard + calendario.
+2. Crea un servicio y valida que no permita duración > 120 minutos.
+3. En calendario admin, edita una cita y cambia teléfono del paciente.
+4. Inicia sesión como profesional y revisa "Mis Pacientes".
+5. Inicia sesión como paciente y reserva una cita completa.
+6. Comprueba "Mis Citas" y anula una cita.
+
 ---
 
 ## Credenciales de prueba
@@ -175,6 +184,14 @@ Importa los archivos de la carpeta `postman/` en Postman:
 2. `MediCitas_Local.postman_environment.json` — Variables de entorno preconfiguradas.
 
 Los scripts de la colección capturan y guardan el token automáticamente tras el login.
+
+### Checklist de aceptación
+
+Consulta el checklist completo en `docs/checklist_aceptacion.md`.
+
+### Limitaciones y mejoras futuras
+
+Consulta la propuesta en `docs/limitaciones_y_mejoras_futuras.md`.
 
 ---
 

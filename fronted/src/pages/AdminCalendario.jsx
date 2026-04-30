@@ -13,6 +13,7 @@ export default function AdminCalendario() {
   const [citaEditando, setCitaEditando] = useState(null);
   const [profesionales, setProfesionales] = useState([]);
   const [servicios, setServicios] = useState([]);
+  const [saveError, setSaveError] = useState('');
 
   const hoy = new Date();
   const [mesVista, setMesVista] = useState({ year: hoy.getFullYear(), month: hoy.getMonth() });
@@ -50,25 +51,32 @@ export default function AdminCalendario() {
 
   const abrirModalCrear = () => {
     setCitaEditando(null);
+    setSaveError('');
     setMostrarModal(true);
   };
 
   const abrirModalEditar = (cita) => {
     setCitaEditando(cita);
+    setSaveError('');
     setMostrarModal(true);
   };
 
   const cerrarModal = () => {
     setMostrarModal(false);
     setCitaEditando(null);
+    setSaveError('');
   };
 
   const guardarCita = async (formData) => {
+    setSaveError('');
     try {
       if (citaEditando?.id) {
         // Editar cita existente
         const payload = {
           paciente_id: citaEditando.paciente_id,
+          paciente_nombre: formData.paciente_nombre,
+          paciente_email: formData.paciente_email,
+          paciente_telefono: formData.paciente_telefono,
           profesional_id: formData.profesional_id || citaEditando.profesional_id,
           fecha: formData.fecha,
           hora: formData.hora,
@@ -88,7 +96,23 @@ export default function AdminCalendario() {
       cerrarModal();
     } catch (error) {
       console.error('Error al guardar cita:', error);
-      alert('Error al guardar la cita');
+      const data = error.response?.data;
+      const toShortEs = (msg = '') => {
+        const text = String(msg).toLowerCase();
+        if (text.includes('telefono') || text.includes('phone')) return 'Telefono no valido.';
+        if (text.includes('email') || text.includes('correo')) return 'Email no valido.';
+        if (text.includes('fecha') || text.includes('date')) return 'Fecha no valida.';
+        if (text.includes('hora') || text.includes('time')) return 'Hora no valida.';
+        return 'No se pudo guardar.';
+      };
+
+      if (data?.errors) {
+        const firstError = Object.values(data.errors)[0];
+        const rawMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+        setSaveError(toShortEs(rawMessage));
+      } else {
+        setSaveError(toShortEs(data?.message));
+      }
     }
   };
 
@@ -203,7 +227,6 @@ export default function AdminCalendario() {
           <div className="grid grid-cols-7 gap-1">
             {[...Array(primerDia === 0 ? 6 : primerDia - 1)].map((_, i) => <div key={'e' + i}></div>)}
             {Array.from({ length: diasMes }, (_, i) => i + 1).map((dia) => {
-              const esHoy = esHoyMes && dia === hoy.getDate();
               const fecha = formatFecha(dia);
               const sel = fechaSel === fecha;
               const numCitas = citasPorDia(dia);
@@ -214,10 +237,8 @@ export default function AdminCalendario() {
                   onClick={() => setFechaSel(fecha)}
                   className={`relative rounded-xl w-full aspect-square flex flex-col items-center justify-center transition ${
                     sel
-                      ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300'
-                      : esHoy
-                        ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-400'
-                        : 'hover:bg-gray-50 text-gray-800'
+                      ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-400'
+                      : 'hover:bg-gray-50 text-gray-800'
                   }`}
                 >
                   <span className={`font-semibold text-base ${numCitas > 0 && !sel ? 'text-gray-900' : ''}`}>
@@ -230,14 +251,14 @@ export default function AdminCalendario() {
                         <span
                           key={id}
                           className="w-2 h-2 rounded-full inline-block"
-                          style={{ backgroundColor: sel ? 'rgba(255,255,255,0.7)' : (espMap[id]?.color || '#9ca3af') }}
+                          style={{ backgroundColor: espMap[id]?.color || '#9ca3af' }}
                           title={espMap[id]?.nombre}
                         />
                       ))}
                     </div>
                   )}
                   {numCitas > 0 && (
-                    <span className={`text-[10px] font-bold leading-none mt-0.5 ${sel ? 'text-blue-200' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] font-bold leading-none mt-0.5 ${sel ? 'text-blue-500' : 'text-gray-400'}`}>
                       {numCitas}
                     </span>
                   )}
@@ -351,6 +372,7 @@ export default function AdminCalendario() {
           profesionales={profesionales}
           servicios={servicios}
           especialidades={especialidades}
+          errorMsg={saveError}
           onClose={cerrarModal}
           onGuardar={guardarCita}
         />
@@ -360,12 +382,12 @@ export default function AdminCalendario() {
 }
 
 // Componente modal mejorado para crear y editar citas
-function ModalEditarCita({ cita, fechaBuscada, profesionales, servicios, especialidades, onClose, onGuardar }) {
+function ModalEditarCita({ cita, fechaBuscada, profesionales, servicios, especialidades, errorMsg, onClose, onGuardar }) {
   const [form, setForm] = useState(cita ? {
     paciente_id: cita.paciente_id,
     paciente_nombre: `${cita.paciente?.name} ${cita.paciente?.apellidos || ''}`,
     paciente_email: cita.paciente?.email || '',
-    paciente_telefono: cita.paciente?.phone || '',
+    paciente_telefono: cita.paciente?.telefono || '',
     profesional_id: cita.profesional_id,
     fecha: cita.fecha,
     hora: cita.hora,
@@ -421,6 +443,12 @@ function ModalEditarCita({ cita, fechaBuscada, profesionales, servicios, especia
         </button>
 
         <h2 className="text-3xl font-bold mb-6">{cita ? 'Editar Cita Médica' : 'Nueva Cita Médica'}</h2>
+
+        {errorMsg && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {errorMsg}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Sección del Paciente */}

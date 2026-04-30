@@ -206,8 +206,16 @@ export default function ProfesionalLayout({ user, onLogout }) {
   const guardarEdicionPaciente = async () => {
     if (!modalEditarPaciente) return;
 
+    const telefonoLimpio = formPaciente.telefono.trim();
+    const telefonoValido = /^[0-9+()\- ]{9,15}$/.test(telefonoLimpio);
+
     if (!formPaciente.name.trim() || !formPaciente.email.trim()) {
       alert('Nombre y email son obligatorios');
+      return;
+    }
+
+    if (telefonoLimpio && !telefonoValido) {
+      alert('El telefono debe tener entre 9 y 15 caracteres validos y no puede contener letras');
       return;
     }
 
@@ -217,7 +225,7 @@ export default function ProfesionalLayout({ user, onLogout }) {
         name: formPaciente.name.trim(),
         apellidos: formPaciente.apellidos.trim() || null,
         email: formPaciente.email.trim(),
-        telefono: formPaciente.telefono.trim() || null,
+        telefono: telefonoLimpio || null,
       });
 
       setPacientes((prev) => prev.map((p) => (p.id === modalEditarPaciente.id ? { ...p, ...res.data } : p)));

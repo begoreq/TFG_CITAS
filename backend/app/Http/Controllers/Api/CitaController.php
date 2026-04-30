@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\Servicio;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class CitaController extends Controller
@@ -112,12 +113,45 @@ class CitaController extends Controller
             'fecha' => 'sometimes|date',
             'hora' => 'sometimes',
             'notas_medicas' => 'sometimes|nullable|string',
+            'paciente_nombre' => 'sometimes|nullable|string|max:255',
+            'paciente_email' => [
+                'sometimes',
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($cita->paciente_id),
+            ],
+            'paciente_telefono' => ['sometimes', 'nullable', 'string', 'max:15', 'regex:/^[0-9+()\- ]{9,15}$/'],
         ]);
 
         $cita->update($request->only('fecha', 'hora', 'estado', 'notas', 'notas_medicas'));
 
         if ($request->has('servicios')) {
             $cita->servicios()->sync($request->servicios);
+        }
+
+        if ($cita->paciente && (
+            $request->has('paciente_nombre') ||
+            $request->has('paciente_email') ||
+            $request->has('paciente_telefono')
+        )) {
+            $updatesPaciente = [];
+
+            if ($request->filled('paciente_nombre')) {
+                $updatesPaciente['name'] = $request->paciente_nombre;
+            }
+
+            if ($request->has('paciente_email')) {
+                $updatesPaciente['email'] = $request->paciente_email;
+            }
+
+            if ($request->has('paciente_telefono')) {
+                $updatesPaciente['telefono'] = $request->paciente_telefono;
+            }
+
+            if (!empty($updatesPaciente)) {
+                $cita->paciente->update($updatesPaciente);
+            }
         }
 
         return response()->json($cita->load('paciente', 'profesional.especialidad', 'servicios'));
